@@ -10,7 +10,9 @@ import java.lang.Math;
 // clusters. Input of Partition is a hash map representing the connect table,
 // and the number of clusters.
 public class GraphPartition {
-	private static HashMap<Integer, ArrayList<NodeEdgeInfo>> connect_table;
+	// the float list consists of pairs of id and weight, id can be converted to int
+	private static HashMap<Integer, ArrayList<int>> connect_table;
+	private static HashMap<Integer, ArrayList<float>> weight_table;
 	
 	// here a long represents two integer index of nodes appending by ascending order
 	private static HashMap<Long, Float> edges;
@@ -18,11 +20,11 @@ public class GraphPartition {
 	
 	private static double weightSum;
 		
-	public static ArrayList<HashSet<Integer>> Partiton(HashMap<Integer, ArrayList<NodeEdgeInfo>> graph, int clusterNum) {
-		connect_table = graph;
+	public static ArrayList<HashSet<Integer>> Partiton(int clusterNum) {
+		
 		ArrayList<HashSet<Integer>> result = new ArrayList<HashSet<Integer>>();
 		
-		// first extract all edges/nodes from the connect table and compute weightSum.
+		// first extract all edges/nodes from the graph to form connect table and compute weightSum.
 		generateStructures();
 		
 		ArrayList<HashMap<Integer, Float>> remainsWeightToCluster = new ArrayList<HashMap<Integer, Float>>();
@@ -55,33 +57,39 @@ public class GraphPartition {
 				nodes.remove(node2);
 				cluster.add(node1);
 				cluster.add(node2);
-				for (NodeEdgeInfo edge : connect_table.get(node1)) {
-					int another = edge.getAnotherEnd();
+				ArrayList<int> connections = connect_table.get(node1);
+				ArrayList<float> weights = weight_table.get(node1);
+				for (int j = 0; j < connections.size(); j++) {
+					int another = connections.get(j);
+					float weight = weights.get(j);
 					if (cluster.contains(another) == false) {
-						partitionWeight += edge.getWeight();
+						partitionWeight += weight;
 						if (nodes.contains(another)) {
 							long edgeIndex = ((long)(Math.min(node1, another))) << 32
 									+ ((long)(Math.max(node1, another)));
 							edges.remove(edgeIndex);
 							if (weightToCluster.containsKey(another))
-								weightToCluster.put(another, weightToCluster.get(another) + edge.getWeight());
+								weightToCluster.put(another, weightToCluster.get(another) + weight);
 							else
-								weightToCluster.put(another, edge.getWeight());
+								weightToCluster.put(another, weight);
 						}
 					}
 				}
-				for (NodeEdgeInfo edge : connect_table.get(node2)) {
-					int another = edge.getAnotherEnd();
+				connections = connect_table.get(node2);
+				weights = weight_table.get(node2);
+				for (int j = 0; j < connections.size(); j++) {
+					int another = connections.get(j);
+					float weight = weights.get(j);
 					if (cluster.contains(another) == false) {
-						partitionWeight += edge.getWeight();
+						partitionWeight += weight;
 						if (nodes.contains(another)) {
 							long edgeIndex = ((long)(Math.min(node2, another))) << 32
 									+ ((long)(Math.max(node2, another)));
 							edges.remove(edgeIndex);
 							if (weightToCluster.containsKey(another))
-								weightToCluster.put(another, weightToCluster.get(another) + edge.getWeight());
+								weightToCluster.put(another, weightToCluster.get(another) + weight);
 							else
-								weightToCluster.put(another, edge.getWeight());
+								weightToCluster.put(another, weight);
 						}
 					}
 				}
@@ -100,18 +108,21 @@ public class GraphPartition {
 					weightToCluster.remove(newNode);
 					nodes.remove(newNode);
 					cluster.add(newNode);
-					for (NodeEdgeInfo edge : connect_table.get(newNode)) {
-						int another = edge.getAnotherEnd();
+					connections = connect_table.get(newNode);
+					weights = weight_table.get(newNode);
+					for (int j = 0; j < connections.size(); j++) {
+						int another = connections.get(j);
+						float weight = weights.get(j);
 						if (cluster.contains(another) == false) {
-							partitionWeight += edge.getWeight();
+							partitionWeight += weight;
 							if (nodes.contains(another)) {
 								long edgeIndex = ((long)(Math.min(newNode, another))) << 32
 										+ ((long)(Math.max(newNode, another)));
 								edges.remove(edgeIndex);
 								if (weightToCluster.containsKey(another))
-									weightToCluster.put(another, weightToCluster.get(another) + edge.getWeight());
+									weightToCluster.put(another, weightToCluster.get(another) + weight);
 								else
-									weightToCluster.put(another, edge.getWeight());
+									weightToCluster.put(another, weight);
 							}
 						}
 					}
@@ -128,7 +139,7 @@ public class GraphPartition {
 			int choice = node % clusterNum;
 			float weight = 0;
 			for (int i = 0; i < clusterNum; ++i) {
-				if (remainsWeightToCluster.get(i).get(node) > weight) {
+				if (remainsWeightToCluster.get(i).containsKey(node) && remainsWeightToCluster.get(i).get(node) > weight) {
 					weight = remainsWeightToCluster.get(i).get(node);
 					choice = i;
 				}
@@ -143,19 +154,31 @@ public class GraphPartition {
 	
 	// generate edges, nodes and compute the weight sum of all edges in the same time
 	private static void generateStructures() {
+		Graph graph = new Graph();
+		HashMap<Integer,ArrayList<float>> pair_table = graph.getEdgesInfos();
 		edges = new HashMap<Long, Float>();
 		nodes = new HashSet<Integer>();
 		weightSum = 0;
-		for (Map.Entry<Integer, ArrayList<NodeEdgeInfo>> entry : connect_table.entrySet()) {
-			nodes.add(entry.getKey());
-			for (NodeEdgeInfo edge : entry.getValue()) {
-				long edgeIndex = ((long)(Math.min(entry.getKey(), edge.getAnotherEnd()))) << 32
-						+ ((long)(Math.max(entry.getKey(), edge.getAnotherEnd())));
+		for (Map.Entry<Integer, ArrayList<float>> entry : pair_table.entrySet()) {
+			int thisEnd = entry.getKey();
+			ArrayList<float> pairs = entry.getValue();
+			nodes.add(thisEnd);
+			ArrayList<int> connections = new ArrayList<int>();
+			ArrayList<float> weights = new ArrayList<float>();
+			for (int i = 0; i < pairs.size(); i += 2) {
+				int anotherEnd = (int)pairs.get(i);
+				float weight = pairs.get(i + 1);
+				connections.add(anotherEnd);
+				weights.add(weight);
+				long edgeIndex = ((long)(Math.min(thisEnd, anotherEnd))) << 32
+						+ ((long)(Math.max(thisEnd, anotherEnd)));
 				if (edges.containsKey(edgeIndex) == false) {
-					edges.put(edgeIndex, edge.getWeight());
-					weightSum += edge.getWeight();
+					edges.put(edgeIndex, weight);
+					weightSum += weight;
 				}
 			}
+			connect_table.put(thisEnd, connections);
+			weight_table.put(thisEnd, weights);
 		}
 	}
 }

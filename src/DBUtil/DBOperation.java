@@ -215,14 +215,15 @@ public class DBOperation {
 			}
     }
     
-   //表edge_weight表的操作
-   //create  会遇到on duplicated key时的操作(加操作包含在了这一步里的重复边里)
+    //表edge_weight表的操作
+    //create  会遇到on duplicated key时的操作(加操作包含在了这一步里的重复边里)
+    //使用的映射是映射到n^0.75，这个参数可以调整。
     public void insertEdgesBatch(List<String> addrIds) {
     	try {
     		for(int i=0;i<addrIds.size();i++) {
     			String sql = "insert into table edge_weight_tbl(addr1,addr2,weight,is_updated) values("
     					+addrIds.get(i).split(",")[0]+","+addrIds.get(i).split(",")[1]+",1,1) "
-    							+ "on duplicated key update weight = ";     		
+    							+ "on duplicated key update weight = if(weight < 0, 1, power(power(weight, 4.0/3)+1, 0.75))";
 				stat.addBatch(sql);	
     		}
     		stat.executeBatch();
@@ -230,7 +231,7 @@ public class DBOperation {
 			// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-    	} 
+    } 
     //delete  在每次进行图的重分割之前进行处理
     public void deleteEdges() {
     	String sql = "delete * form edge_weight_tbl where weight < 0";
@@ -242,8 +243,16 @@ public class DBOperation {
 		}
     }
     //update
-    public void decreaseEdgesWeight() {
-    	
+    public void decreaseEdgesWeight(float decay_rate) {
+    	try {
+    			String sql = "update edge_weight_tbl set weight = weight * " + decay_rate +" -1";
+				stat.addBatch(sql);	
+    		}
+    		stat.executeBatch();
+    	} catch (SQLException e) {
+			// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
     }
     public void flushUpdated() {
     	String sql = "update edge_weight_tbl set is_updated = 0";
