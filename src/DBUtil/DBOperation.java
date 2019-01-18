@@ -52,15 +52,14 @@ public class DBOperation {
     //由于比特币地址为200bits,将上百万地址串读入内存将会占据大量的内存空间，因此需要将地址映射为int型的字段，
     //int 型为32bit，是十亿量级，满足我们的实验需求和实际上使用的比特币地址总数，因此是可行的方案
     //设计存储比特币地址和int型id的映射表，id唯一主键，addr为唯一型键,有addr->id.同时设置cluster_id_new字段为-1。
-    public void allocateAddrsIdsBatch(String[] addrs){
+    public void allocateAddrsIdsBatch(ArrayList<String> addrs){
     	//Sql语句含义：首先设置自增量的起始值连续。然后ignore防止插入相同时报错
     	try {
-    		for(int i = 0;i<addrs.length;i++) {
+    		for(int i = 0;i<addrs.size();i++) {
     			String sql = "alter table id_addr_tbl AUTO_INCREMENT=1;insert ignore into id_addr_tbl(addr,cluster_id_new) "
-            		+ "values("+ addrs[i] + ",-1)";
+            		+ "values("+ addrs.get(i) + ",-1)";
     			stat.addBatch(sql);
-    		}
-       
+    		}      
 				stat.executeBatch();
 			} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -79,16 +78,16 @@ public class DBOperation {
 		}
     	return id;
     }
-    public HashMap<String,Integer> getAddrIdMap(String[] addrs){
+    public HashMap<String,Integer> getAddrIdMap(ArrayList<String> addrs){
     	HashMap<String,Integer> addrIdMap = new HashMap<String,Integer>();
     	try {
 			CallableStatement cs = conn.prepareCall("CALL ADDR_ID_PAIRS (?)");
 			String sql_para = "(";
-			for(int i = 0;i<addrs.length;i++) {
-				if(i<addrs.length-1)
-					sql_para += ("\"" +addrs[i]+ "\""+",");
+			for(int i = 0;i<addrs.size();i++) {
+				if(i<addrs.size()-1)
+					sql_para += ("\"" +addrs.get(i)+ "\""+",");
 				else
-					sql_para += ("\"" + addrs[i] + "\"" + ")");
+					sql_para += ("\"" + addrs.get(i) + "\"" + ")");
 			}
 			cs.setString(1,sql_para);
 			cs.execute();
@@ -115,16 +114,16 @@ public class DBOperation {
 		}
     	return clusterId;
     }
-    public Map<Integer,Integer> getIdClusterIdMap(int[] ids) {
+    public HashMap<Integer,Integer> getIdClusterIdMap(ArrayList<Integer> ids) {
     	HashMap<Integer,Integer> idClusterIdMap = new HashMap<Integer,Integer>();
     	try {
 			CallableStatement cs = conn.prepareCall("CALL ID_CLUSTERID_PAIRS(?)");
 			String sql_para = "(";
-			for(int i = 0;i<ids.length;i++) {
-				if(i<ids.length-1)
-					sql_para += (ids[i] + ",");
+			for(int i = 0;i<ids.size();i++) {
+				if(i<ids.size()-1)
+					sql_para += (ids.get(i) + ",");
 				else
-					sql_para += (ids[i] + ")");
+					sql_para += (ids.get(i) + ")");
 			}
 			cs.setString(1,sql_para);
 			cs.execute();
@@ -255,19 +254,61 @@ public class DBOperation {
 			e.printStackTrace();
 		}
     }
-    //retrieve
-    public HashMap<String,Integer> getEpochEdges() {
-    	HashMap<String,Integer> epochEdges = new HashMap<String,Integer>();
-    	String sql = "select addr1,addr2,weight from edge_weight_tbl where is_updated = 1";
+    //retrieve  *****条件,加参数
+    public HashMap<Integer,ArrayList<Float>> getEpochEdges(int limit) {
+    	HashMap<Integer,ArrayList<Float>> epochEdges = new HashMap<Integer,ArrayList<Float>>();
+    	String sql = "select addr1,addr2,weight from edge_weight_tbl where is_updated = 1 and weight>" + limit;
     	try {
 			ResultSet rs = stat.executeQuery(sql);
 			while(rs.next()) {
-				epochEdges.put(""+rs.getInt("addr1")+","+rs.getInt("addr2"), rs.getInt("weight"));
+				int id1 = rs.getInt("addr1");
+				int id2 = rs.getInt("addr2");
+				float weight = rs.getInt("weight");
+				if(epochEdges.containsKey(id1)) {
+					epochEdges.get(id1).add((float)id2);
+					epochEdges.get(id1).add(weight);
+				}
+				else {
+					ArrayList<Float> list = new ArrayList<Float>();
+					list.add((float)id2);
+					list.add(weight);
+					epochEdges.put(id1, list);
+				}
+				if(epochEdges.containsKey(id2)) {
+					epochEdges.get(id2).add((float)id1);
+					epochEdges.get(id2).add(weight);
+				}
+				else {
+					ArrayList<Float> list = new ArrayList<Float>();
+					list.add((float)id1);
+					list.add(weight);
+					epochEdges.put(id2, list);
+				}
 			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
     	return epochEdges;
+    }
+    public void flushAddrs(int clusterCount) {
+    	int denseClusterId = -1;
+    	for(int i = 0;i<clusterCount;i++) {
+    		String sql = "select cluster_id_new from id_addr_tbl where cluster_id_old=" + i
+    				+" and cluster_id_new!=-1 group by cluster_id_old order by count(*) desc limit 1";
+    		try {
+				ResultSet rs = stat.executeQuery(sql);			
+				while(rs.next()) {
+					denseClusterId = rs.getInt("cluster_id_new");
+				}
+				String flushAddrSql = "update id_addr_tbl set cluster_id_new=" + denseClusterId + "where cluster_id_old=" + i
+						+ " and cluster_id_new=-1";
+				stat.executeUpdate(flushAddrSql);
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    		
+    	}
     }
 }

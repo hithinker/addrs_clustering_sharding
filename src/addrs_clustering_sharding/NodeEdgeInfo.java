@@ -12,7 +12,7 @@ public class NodeEdgeInfo {
 	public void setAnotherEnd(int a) {
 		anotherEnd = a;
 		return;
-	}
+	} 
 	public int getAnotherEnd() {
 		return anotherEnd;
 	}
