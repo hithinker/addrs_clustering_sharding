@@ -11,8 +11,8 @@ import java.lang.Math;
 // and the number of clusters.
 public class GraphPartition {
 	// the float list consists of pairs of id and weight, id can be converted to int
-	private static HashMap<Integer, ArrayList<int>> connect_table;
-	private static HashMap<Integer, ArrayList<float>> weight_table;
+	private static HashMap<Integer, ArrayList<Integer>> connect_table;
+	private static HashMap<Integer, ArrayList<Float>> weight_table;
 	
 	// here a long represents two integer index of nodes appending by ascending order
 	private static HashMap<Long, Float> edges;
@@ -40,14 +40,14 @@ public class GraphPartition {
 			while (innerWeight + partitionWeight / 2 < weightSum / (clusterNum + 1) && edges.isEmpty() == false) {
 				// choose the max weight edge
 				long startNodes = 0;
-				double weight = 0;
+				double startWeight = 0;
 				for (Map.Entry<Long, Float> entry : edges.entrySet()) {
-					if (entry.getValue() > weight) {
-						weight = entry.getValue();
+					if (entry.getValue() > startWeight) {
+						startWeight = entry.getValue();
 						startNodes = entry.getKey();
 					}
 				}
-				innerWeight += weight;
+				innerWeight += startWeight;
 				edges.remove(startNodes);
 				
 				// add the first two nodes to cluster
@@ -57,8 +57,8 @@ public class GraphPartition {
 				nodes.remove(node2);
 				cluster.add(node1);
 				cluster.add(node2);
-				ArrayList<int> connections = connect_table.get(node1);
-				ArrayList<float> weights = weight_table.get(node1);
+				ArrayList<Integer> connections = connect_table.get(node1);
+				ArrayList<Float> weights = weight_table.get(node1);
 				for (int j = 0; j < connections.size(); j++) {
 					int another = connections.get(j);
 					float weight = weights.get(j);
@@ -155,18 +155,18 @@ public class GraphPartition {
 	// generate edges, nodes and compute the weight sum of all edges in the same time
 	private static void generateStructures() {
 		Graph graph = new Graph();
-		HashMap<Integer,ArrayList<float>> pair_table = graph.getEdgesInfos();
+		HashMap<Integer,ArrayList<Float>> pair_table = graph.getEdgesInfos();
 		edges = new HashMap<Long, Float>();
 		nodes = new HashSet<Integer>();
 		weightSum = 0;
-		for (Map.Entry<Integer, ArrayList<float>> entry : pair_table.entrySet()) {
+		for (Map.Entry<Integer, ArrayList<Float>> entry : pair_table.entrySet()) {
 			int thisEnd = entry.getKey();
-			ArrayList<float> pairs = entry.getValue();
+			ArrayList<Float> pairs = entry.getValue();
 			nodes.add(thisEnd);
-			ArrayList<int> connections = new ArrayList<int>();
-			ArrayList<float> weights = new ArrayList<float>();
+			ArrayList<Integer> connections = new ArrayList<Integer>();
+			ArrayList<Float> weights = new ArrayList<Float>();
 			for (int i = 0; i < pairs.size(); i += 2) {
-				int anotherEnd = (int)pairs.get(i);
+				int anotherEnd = pairs.get(i).intValue();
 				float weight = pairs.get(i + 1);
 				connections.add(anotherEnd);
 				weights.add(weight);
