@@ -290,7 +290,7 @@ public class DBOperation {
     //done
     public void decreaseEdgesWeight(float decay_rate) {
     	try {
-    			String sql = "update edge_weight_tbl set acc_weight = acc_weight * " + decay_rate +"where is_updated=0";
+    			String sql = "update edge_weight_tbl set acc_weight = acc_weight * " + decay_rate +"where is_updated= 0";
 				stat.executeUpdate(sql);
     	} catch (SQLException e) {
 			// TODO Auto-generated catch block

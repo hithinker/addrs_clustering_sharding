@@ -14,7 +14,7 @@ import java.util.HashSet;
 
 
 public class BlockProcessor {
-    DBOperation dbOp = new DBOperation();
+    private  DBOperation dbOp = new DBOperation();
     public void readBlock(String dir,int round) throws Exception{
         File blockDir = new File(dir);
         StringBuilder sb = new StringBuilder();

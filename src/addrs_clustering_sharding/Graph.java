@@ -10,7 +10,7 @@ public class Graph {
 	private HashMap<Integer,ArrayList<Float>> graph;
 	public void createGraph() {
 		DBOperation dbOp = new DBOperation();		
-		graph = dbOp.getEpochEdges(3);
+		graph = dbOp.getEpochEdges(2);
 	}
 	public HashMap<Integer,ArrayList<Float>>  getEdgesInfos(){
 		return graph;
