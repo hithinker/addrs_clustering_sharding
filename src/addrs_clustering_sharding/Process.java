@@ -22,11 +22,11 @@ public class Process {
 	private static DBOperation dbOp = new DBOperation();
 	private static BlockProcessor blkProcessor = new BlockProcessor(); 
 	public static void main(String[] args) {
-		dbOp.openConnection("jdbc:mysql://localhost:3306/btc_data");
+		dbOp.openConnection("jdbc:mysql://localhost:3306/btc_data?serverTimezone=UTC");
 		dbOp.flushUpdated();
 		dbOp.clusterIdPreProcess();
 		try {
-			blkProcessor.readBlock("G:\\pkuinfosec\\sharding_improved_paper\\bc\\data\\data0_999",0);
+			blkProcessor.readBlock("/home/infosec/data0_999",dbOp,0);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

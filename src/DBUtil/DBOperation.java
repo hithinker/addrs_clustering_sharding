@@ -19,13 +19,14 @@ public class DBOperation {
     public void openConnection(String url){
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            conn = DriverManager.getConnection(url,"root","admin123#");
+            conn = DriverManager.getConnection(url,"mzl123","admin123#");
             stat = conn.createStatement();
         }catch(ClassNotFoundException e){
             System.out.println("jdbc mysql driver is not found");
             closeConnection();
         }catch(SQLException e){
         	System.out.println("SQL Exception");
+        	e.printStackTrace();
             closeConnection();
         }finally {
             
@@ -47,16 +48,17 @@ public class DBOperation {
     //插入操作
     
     
-    //由于比特币地址为200bits,将上百万地址串读入内存将会占据大量的内存空间，因此需要将地址映射为int型的字段，
+    //由于比特币地址为272bits,将上百万地址串读入内存将会占据大量的内存空间，因此需要将地址映射为int型的字段，
     //int 型为32bit，是十亿量级，满足我们的实验需求和实际上使用的比特币地址总数，因此是可行的方案
     //设计存储比特币地址和int型id的映射表，id唯一主键，addr为唯一型键,有addr->id.同时设置cluster_id_new字段为-1。
     //done
-    public void allocateAddrsIdsBatch(ArrayList<String> addrs){
+    public void allocateAddrsIdsBatch(HashSet<String> addrs){
     	//Sql语句含义：首先设置自增量的起始值连续。然后ignore防止插入相同时报错
     	try {
-    		for(int i = 0;i<addrs.size();i++) {
+    		for(String addr:addrs) {
     			String flushAutoIncSql = "alter table id_addr_tbl AUTO_INCREMENT=1";
-    			String insertSql = "insert ignore into id_addr_tbl(addr,cluster_id_new) values('" + addrs.get(i) + "',-1)";
+    			String insertSql = "insert ignore into id_addr_tbl(addr,cluster_id_new，is_updated) values('" + addr + "',-1,1)"
+    					+ "on duplicated key update is_updated=1";
     			stat.addBatch(flushAutoIncSql);
     			stat.addBatch(insertSql);
     		}      
@@ -186,6 +188,40 @@ public class DBOperation {
 		}
     	return addrClusterIdMap;
     	}
+     public HashMap<String,Integer> getAddrIdByIsUpdate(){
+    	 HashMap<String,Integer> addr_id = new HashMap<String,Integer>();
+    	 String sql = "select addr,id from id_addr_tbl where is_updated=1";
+         try {
+			ResultSet rs = stat.executeQuery(sql);
+			while(rs.next()) {
+				String addr = rs.getString("addr");
+				int id = rs.getInt("id");
+				addr_id.put(addr, id);
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+         
+    	 return addr_id;
+     }
+     public HashMap<String,Integer> getAddrCidByIsUpdate(){
+    	 HashMap<String,Integer> addr_cid = new HashMap<String,Integer>();
+    	 String sql = "select addr,cluster_id_new from id_addr_tbl where is_updated=1 and cluster_id_new != -1";
+         try {
+			ResultSet rs = stat.executeQuery(sql);
+			while(rs.next()) {
+				String addr = rs.getString("addr");
+				int cid = rs.getInt("cluster_id_new");
+				addr_cid.put(addr, cid);
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+         
+    	 return addr_cid;
+     }
     //更新操作
     //done
     public void clusterIdPreProcess() {
