@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="src/DBUtil"/>
+	<classpathentry excluding="src/DBUtil/|src/data/|src/addrs_clustering_sharding/" kind="src" path=""/>
+	<classpathentry kind="src" path="src/data"/>
+	<classpathentry kind="src" path="src/addrs_clustering_sharding"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="E:/mysql-8.0.12-winx64/mysql-connector-java-8.0.12/mysql-connector-java-8.0.12/mysql-connector-java-8.0.12.jar"/>
-	<classpathentry kind="lib" path="F:/JavaLibs/fastjson-1.2.49.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.lang.Math;
+import java.io.*;
 
 // GraphPartition implements the function of partitioning a graph to multiple
 // clusters. Input of Partition is a hash map representing the connect table,
@@ -20,7 +21,7 @@ public class GraphPartition {
 	
 	private static double weightSum;
 		
-	public static ArrayList<HashSet<Integer>> Partiton(int clusterNum) {
+	public static void Partition(int clusterNum) {
 		
 		ArrayList<HashSet<Integer>> result = new ArrayList<HashSet<Integer>>();
 		
@@ -57,6 +58,7 @@ public class GraphPartition {
 				nodes.remove(node2);
 				cluster.add(node1);
 				cluster.add(node2);
+
 				ArrayList<Integer> connections = connect_table.get(node1);
 				ArrayList<Float> weights = weight_table.get(node1);
 				for (int j = 0; j < connections.size(); j++) {
@@ -65,7 +67,7 @@ public class GraphPartition {
 					if (cluster.contains(another) == false) {
 						partitionWeight += weight;
 						if (nodes.contains(another)) {
-							long edgeIndex = ((long)(Math.min(node1, another))) << 32
+							long edgeIndex = (((long)(Math.min(node1, another))) << 32)
 									+ ((long)(Math.max(node1, another)));
 							edges.remove(edgeIndex);
 							if (weightToCluster.containsKey(another))
@@ -83,7 +85,7 @@ public class GraphPartition {
 					if (cluster.contains(another) == false) {
 						partitionWeight += weight;
 						if (nodes.contains(another)) {
-							long edgeIndex = ((long)(Math.min(node2, another))) << 32
+							long edgeIndex = (((long)(Math.min(node2, another))) << 32)
 									+ ((long)(Math.max(node2, another)));
 							edges.remove(edgeIndex);
 							if (weightToCluster.containsKey(another))
@@ -116,7 +118,7 @@ public class GraphPartition {
 						if (cluster.contains(another) == false) {
 							partitionWeight += weight;
 							if (nodes.contains(another)) {
-								long edgeIndex = ((long)(Math.min(newNode, another))) << 32
+								long edgeIndex = (((long)(Math.min(newNode, another))) << 32)
 										+ ((long)(Math.max(newNode, another)));
 								edges.remove(edgeIndex);
 								if (weightToCluster.containsKey(another))
@@ -149,12 +151,34 @@ public class GraphPartition {
 			result.set(choice, newCluster);
 		}
 		
-		return result;
+		try {
+			File output = new File("./test/partitionResult.txt");
+			output.createNewFile();
+			try (FileWriter fw = new FileWriter(output);
+			     BufferedWriter bw = new BufferedWriter(fw)
+			) {	
+				for (int i = 0; i < clusterNum; ++i) {
+					HashSet<Integer> cluster = result.get(i);
+					for (int node : cluster) {
+						bw.write(((Integer)node).toString());
+						bw.write(" ");
+					}
+					bw.newLine();
+				}
+				bw.flush();
+			}
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	// generate edges, nodes and compute the weight sum of all edges in the same time
 	private static void generateStructures() {
+		connect_table = new HashMap<Integer, ArrayList<Integer>>();
+		weight_table = new HashMap<Integer, ArrayList<Float>>();
 		Graph graph = new Graph();
+		graph.createGraph();
 		HashMap<Integer,ArrayList<Float>> pair_table = graph.getEdgesInfos();
 		edges = new HashMap<Long, Float>();
 		nodes = new HashSet<Integer>();
@@ -170,7 +194,7 @@ public class GraphPartition {
 				float weight = pairs.get(i + 1);
 				connections.add(anotherEnd);
 				weights.add(weight);
-				long edgeIndex = ((long)(Math.min(thisEnd, anotherEnd))) << 32
+				long edgeIndex = (((long)(Math.min(thisEnd, anotherEnd))) << 32)
 						+ ((long)(Math.max(thisEnd, anotherEnd)));
 				if (edges.containsKey(edgeIndex) == false) {
 					edges.put(edgeIndex, weight);

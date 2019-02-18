@@ -1,3 +1,7 @@
-/data/
-/DBUtil/
+/.classpath
+/.project
+/MANIFEST.MF
+/README
+/src/
+/Process.class
 /addrs_clustering_sharding/
