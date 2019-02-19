@@ -1,4 +1,4 @@
-package addrs_clustering_sharding;
+package com.btc.paper.graph;
 
 public class PartitionTest {
 

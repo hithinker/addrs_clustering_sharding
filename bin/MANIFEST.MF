@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+Class-Path: lib/mysql-connector-java-8.0.12.jar 
+ lib/fastjson-1.2.49.jar 
+Main-Class: addrs_clustering_sharding.Process

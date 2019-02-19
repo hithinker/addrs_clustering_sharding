@@ -1,4 +1,4 @@
-package addrs_clustering_sharding;
+package com.btc.paper.graph;
 
 // NodeEdgeInfo represents a tuple of node index of another end of the edge
 // and the edge weight. It's a relatively naive design but enough of use.

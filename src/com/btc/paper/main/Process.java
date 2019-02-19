@@ -1,11 +1,10 @@
-package addrs_clustering_sharding;
+
+package com.btc.paper.main;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import DBUtil.DBOperation;
-import data.BlockProcessor;
 
 //实验指标计算
 public class Process {
@@ -19,21 +18,8 @@ public class Process {
 	// 7.将得到的地址聚类结果存入数据库
 	// 8.同步更新其他未参与地址聚类地址的新簇号(除第一次地址聚类外,每次分割后自动执行)
 	// 9.实验指标统计：
-	private static DBOperation dbOp = new DBOperation();
-	private static BlockProcessor blkProcessor = new BlockProcessor(); 
 	public static void main(String[] args) {
-		dbOp.openConnection("jdbc:mysql://localhost:3306/btc_data?serverTimezone=UTC");
-		dbOp.flushUpdated();
-		dbOp.clusterIdPreProcess();
-		try {
-			blkProcessor.readBlock("/home/infosec/data0_999",dbOp,0);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		ArrayList<HashSet<Integer>> clusters = GraphPartition.Partiton(1000);
-		saveGraphPartition(clusters);
-		dbOp.closeConnection();
+		
 	}
 	public static void saveGraphPartition(ArrayList<HashSet<Integer>> clusters) {	
 		for(int i=0;i<clusters.size();i++) {
@@ -41,7 +27,7 @@ public class Process {
 			for(Integer id:clusters.get(i)) {
 				idClusteridMap.put(id, i+1);
 			}
-			dbOp.updateClusterIdBatch(idClusteridMap);
+			
 		}
 	}
 }
