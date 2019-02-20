@@ -30,9 +30,10 @@ public class GraphPartition {
 	
 	private static double weightSum;
 		
-	public static void Partition(int clusterNum) {
+	public static HashMap<Integer, Integer> Partition(int clusterNum) {
 		
-		ArrayList<HashSet<Integer>> result = new ArrayList<HashSet<Integer>>();
+		//ArrayList<HashSet<Integer>> result = new ArrayList<HashSet<Integer>>();
+		HashMap<Integer, Integer> output = new HashMap<Integer, Integer>();
 		
 		// first extract all edges/nodes from the graph to form connect table and compute weightSum.
 		generateStructures();
@@ -142,7 +143,10 @@ public class GraphPartition {
 				}
 			}
 			remainsWeightToCluster.add(weightToCluster);
-			result.add(cluster);
+			//result.add(cluster);
+			for (int node : cluster) {
+				output.put(node, i);
+			}
 		}
 		
 		// the remaining nodes is allocated to a cluster with biggest weight
@@ -155,31 +159,12 @@ public class GraphPartition {
 					choice = i;
 				}
 			}
-			HashSet<Integer> newCluster = result.get(choice);
-			newCluster.add(node);
-			result.set(choice, newCluster);
+			//HashSet<Integer> newCluster = result.get(choice);
+			//newCluster.add(node);
+			//result.set(choice, newCluster);
+			output.put(node, choice);
 		}
-		
-		try {
-			File output = new File("./test/partitionResult.txt");
-			output.createNewFile();
-			try (FileWriter fw = new FileWriter(output);
-			     BufferedWriter bw = new BufferedWriter(fw)
-			) {	
-				for (int i = 0; i < clusterNum; ++i) {
-					HashSet<Integer> cluster = result.get(i);
-					for (int node : cluster) {
-						bw.write(((Integer)node).toString());
-						bw.write(" ");
-					}
-					bw.newLine();
-				}
-				bw.flush();
-			}
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-		}
+		return output;
 	}
 	
 	// generate edges, nodes and compute the weight sum of all edges in the same time
