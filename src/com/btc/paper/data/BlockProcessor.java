@@ -212,11 +212,16 @@ public class BlockProcessor {
 		    	e.printStackTrace();
 		    }
 		    finally {
-		    	if(ebr != null) {
-		    		ebr = null;
-		    	}
-		    	if(ebw != null)
-		    		ebw=null;
+		    	
+		    		try {
+		    			if(ebr != null) 
+		    				ebr.close();
+						if(ebw != null)
+				    		ebw.close();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					};		    	
 		    }
 		    
 		    epochGraph.putAll(edge_weight);
@@ -296,9 +301,11 @@ public class BlockProcessor {
 	}
 	//addr-id³Ö¾Ã»¯
 	public void saveAddrIdMap(HashMap<String,Integer> addrIdMap,String addrIdPath){
+		FileOutputStream fos = null;
+		BufferedWriter bw = null;
 		try {
-			FileOutputStream fos= new FileOutputStream(new File(addrIdPath));
-			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos));
+			fos= new FileOutputStream(new File(addrIdPath));
+			bw = new BufferedWriter(new OutputStreamWriter(fos));
 			for(String addr:addrIdMap.keySet()) {
 				String line = addr + " " + addrIdMap.get(addr);
 				bw.write(line);
@@ -308,6 +315,18 @@ public class BlockProcessor {
 			e.printStackTrace();
 		} catch(IOException e) {
 			e.printStackTrace();
+		}finally {
+			
+				try {
+					if(bw != null)
+						bw.close();
+					if(fos != null)
+						fos.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			
 		}
 		
 	}
