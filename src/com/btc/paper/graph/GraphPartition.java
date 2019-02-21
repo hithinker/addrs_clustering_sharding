@@ -199,47 +199,66 @@ public class GraphPartition {
 			weight_table.put(thisEnd, weights);
 		}
 	}
-	public void flushClusters(HashMap<Integer,Integer> clusters,String clustersPath) {
-		File clustersFile = new File(clustersPath); 
+	public void freshClusters(HashMap<Integer,Integer> clusters,int round) {
+		String oldIdCidFilePath = "/home/infosec/sharding_expt/idCid" + (round - 1) + ".txt";
+		String newidCidFilePath = "/home/infosec/sharding_expt/idCid" + (round - 1) + ".txt";
+		File oldIdCidFile = new File(oldIdCidFilePath);
+		File newIdCidFile = new File(newidCidFilePath);
+		if(!newIdCidFile.exists())
+			try {
+				newIdCidFile.createNewFile();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 		BufferedReader br = null;
 		BufferedWriter bw = null;
 		try {
-			br = new BufferedReader(new InputStreamReader(new FileInputStream(clustersFile)));
-			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(""))));
-			String line = null;
-			while((line = br.readLine()) != null) {
-				String[] nodes = line.trim().split(" ");
-				HashMap<Integer,Integer> stats = new HashMap<Integer,Integer>();
-				for(int i = 0;i<nodes.length;i++) {
-					int node = Integer.parseInt(nodes[i]);
-					if(clusters.containsKey(node)) {
-						int cid = clusters.get(node);
-						if(stats.containsKey(cid)) 
-							stats.put(cid, stats.get(cid)+1);
-						else
-							stats.put(cid, 1);
-					}
-				}
-				int targetedCid = -1;
-				int max = 0;
-				for(int node:stats.keySet()) {
-					if(stats.get(node)>max) {
-						targetedCid = node;
-						max = stats.get(node);
-					}
-				}
-				for(int i=0;i<nodes.length;i++) {
-					String idcid = "";
-					if(clusters.containsKey(Integer.parseInt(nodes[i]))) {
-						idcid = nodes[i] + " " + clusters.get(Integer.parseInt(nodes[i])) + "\n";
-						clusters.remove(Integer.parseInt(nodes[i]));
-					}
+			br = new BufferedReader(new InputStreamReader(new FileInputStream(oldIdCidFile)));
+			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(newIdCidFile)));
+			ArrayList<HashMap<Integer,Integer>> old2NewStats = new ArrayList<HashMap<Integer,Integer>>();
+			ArrayList<ArrayList<Integer>> remainingAddrIds = new ArrayList<ArrayList<Integer>>();
+			String idCidLine = null;
+			while((idCidLine = br.readLine())!= null) {
+				if(idCidLine.trim().length() < 1)
+					break;
+				int aId = Integer.parseInt(idCidLine.trim().split(" ")[0]);
+				int cId = Integer.parseInt(idCidLine.trim().split(" ")[1]);
+				if(clusters.containsKey(aId)) {
+					HashMap<Integer,Integer> singleOldClusterStat = old2NewStats.get(cId);
+					int newCid = clusters.get(aId);
+					if(singleOldClusterStat.containsKey(newCid)) 
+						singleOldClusterStat.put(newCid, singleOldClusterStat.get(newCid) + 1);		
 					else
-						idcid = nodes[i] + " " + targetedCid + "\n";
-					bw.write(idcid);
+						singleOldClusterStat.put(newCid,1);
+					String idCidPair = aId + " " + clusters.get(aId) + "\n";
+					bw.write(idCidPair);
+				}
+				else {
+					remainingAddrIds.get(cId).add(aId);
 				}
 			}
-			clustersFile.delete();
+			oldIdCidFile.delete();			
+			for(int i = 0;i<old2NewStats.size();i++) {
+				int maxValue = -1;
+				int maxCid = -1;
+				HashMap<Integer,Integer> oneOldClusterStat = old2NewStats.get(i);
+				for(int clusterId:oneOldClusterStat.keySet()) {
+					if(oneOldClusterStat.get(clusterId) > maxValue) {
+						maxCid = clusterId;
+						maxValue = oneOldClusterStat.get(clusterId);
+					}
+				}
+				ArrayList<Integer> ids = remainingAddrIds.get(i);				
+				for(int id:ids) {
+					String idCidPair = id + " " + maxCid + "\n";
+					bw.write(idCidPair);
+				}
+			}
+			for(int addrId:clusters.keySet()) {
+				String idCidPair = addrId + " " + clusters.get(addrId) + "\n";
+				bw.write(idCidPair);
+			}
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
