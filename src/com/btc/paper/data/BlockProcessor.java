@@ -21,6 +21,8 @@ public class BlockProcessor {
 		//划分地址簇前后对比
 		ArrayList<Integer> beforeClusteredShardStat = new ArrayList<Integer>();
 		ArrayList<Integer> afterClusteredShardStat = new ArrayList<Integer>();
+		int randShardingCount = 0;
+	    int clusteredShardingCount = 0;
 		//addr-id Map
 		HashMap<String,Integer> addr_id = new HashMap<String,Integer>();
 		int addrsCount = 0;
@@ -39,8 +41,9 @@ public class BlockProcessor {
 		for (File blockData : blockDir.listFiles()) {
 			long bstart = System.currentTimeMillis();
 			String line = null;
+			BufferedReader br;
 			try {
-				BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(blockData)));
+				br = new BufferedReader(new InputStreamReader(new FileInputStream(blockData)));
 				while ((line = br.readLine()) != null)
 					sb.append(line);
 				block_json_obj = JSON.parseObject(sb.toString());
@@ -224,7 +227,15 @@ public class BlockProcessor {
 					};		    	
 		    }
 		    
-		    epochGraph.putAll(edge_weight);
+		    epochGraph.putAll(edge_weight);		    
+		    for(int i = 0;i < beforeClusteredShardStat.size();i++) {
+		    	randShardingCount += beforeClusteredShardStat.get(i);
+		    }
+		    for(int i = 0;i < afterClusteredShardStat.size();i++) {
+		    	clusteredShardingCount += afterClusteredShardStat.get(i);
+		    }
+		    System.out.println("round" + round + "在未地址聚类前的跨片数为:" + randShardingCount);
+		    System.out.println("round" + round + "地址聚类后的跨片数为:" + clusteredShardingCount);
 		}else
 			epochGraph = edge_weight;
 		long end = System.currentTimeMillis();
@@ -328,10 +339,6 @@ public class BlockProcessor {
 				}
 			
 		}
-		
-	}
-	//保存历史图
-	public void saveHistoryGraph(HashMap<int[],Integer> epochEdges,HashMap<int[],Integer> remainingEdges,int round) {
 		
 	}
 	// 细粒度的统计：是以块为单位的

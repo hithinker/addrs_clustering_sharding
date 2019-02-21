@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.lang.Math;
-import java.io.*;
 
 // GraphPartition implements the function of partitioning a graph to multiple
 // clusters. Input of Partition is a hash map representing the connect table,
@@ -202,9 +201,11 @@ public class GraphPartition {
 	}
 	public void flushClusters(HashMap<Integer,Integer> clusters,String clustersPath) {
 		File clustersFile = new File(clustersPath); 
+		BufferedReader br = null;
+		BufferedWriter bw = null;
 		try {
-			BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(clustersFile)));
-			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(""))));
+			br = new BufferedReader(new InputStreamReader(new FileInputStream(clustersFile)));
+			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(""))));
 			String line = null;
 			while((line = br.readLine()) != null) {
 				String[] nodes = line.trim().split(" ");
@@ -244,6 +245,15 @@ public class GraphPartition {
 			e.printStackTrace();
 		} catch(IOException e) {
 			e.printStackTrace();
+		}finally {
+			try {
+				if(br != null)
+					br.close();
+				if(bw != null)
+					bw.close();
+				}catch(IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 }
