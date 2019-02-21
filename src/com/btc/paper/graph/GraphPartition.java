@@ -30,13 +30,13 @@ public class GraphPartition {
 	
 	private static double weightSum;
 		
-	public static HashMap<Integer, Integer> Partition(int clusterNum) {
+	public static HashMap<Integer, Integer> Partition(int clusterNum,int round) {
 		
 		//ArrayList<HashSet<Integer>> result = new ArrayList<HashSet<Integer>>();
 		HashMap<Integer, Integer> output = new HashMap<Integer, Integer>();
 		
 		// first extract all edges/nodes from the graph to form connect table and compute weightSum.
-		generateStructures();
+		generateStructures(round);
 		
 		ArrayList<HashMap<Integer, Float>> remainsWeightToCluster = new ArrayList<HashMap<Integer, Float>>();
 		
@@ -168,11 +168,11 @@ public class GraphPartition {
 	}
 	
 	// generate edges, nodes and compute the weight sum of all edges in the same time
-	private static void generateStructures() {
+	private static void generateStructures(int round) {
 		connect_table = new HashMap<Integer, ArrayList<Integer>>();
 		weight_table = new HashMap<Integer, ArrayList<Float>>();
 		Graph graph = new Graph();
-		graph.createGraph();
+		graph.createGraph(round);
 		HashMap<Integer,ArrayList<Float>> pair_table = graph.getEdgesInfos();
 		edges = new HashMap<Long, Float>();
 		nodes = new HashSet<Integer>();
@@ -200,6 +200,10 @@ public class GraphPartition {
 		}
 	}
 	public void freshClusters(HashMap<Integer,Integer> clusters,int round) {
+		if(round == 0) {
+		 this.saveIdCidMap(clusters);
+		 return; 
+		}	
 		String oldIdCidFilePath = "/home/infosec/sharding_expt/idCid" + (round - 1) + ".txt";
 		String newidCidFilePath = "/home/infosec/sharding_expt/idCid" + (round - 1) + ".txt";
 		File oldIdCidFile = new File(oldIdCidFilePath);
@@ -273,6 +277,33 @@ public class GraphPartition {
 				}catch(IOException e) {
 				e.printStackTrace();
 			}
+		}
+	}
+	public void saveIdCidMap(HashMap<Integer,Integer> idCidPairs) {
+		File idCidFilePath = new File("/home/infosec/sharding_expt/idCid0.txt");
+		BufferedWriter bw = null;
+		try {
+			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(idCidFilePath)));
+			if(!idCidFilePath.exists())
+				idCidFilePath.createNewFile();
+            for(int id:idCidPairs.keySet()) {
+            	String idCidStr = id + " " + idCidPairs.get(id) + "\n";
+            	bw.write(idCidStr);
+		    }
+		}catch(FileNotFoundException e) {
+			e.getStackTrace();
+		} 
+		catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+		}finally {
+			if(bw != null)
+				try {
+					bw.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 		}
 	}
 }

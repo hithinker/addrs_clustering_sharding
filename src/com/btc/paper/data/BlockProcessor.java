@@ -24,11 +24,11 @@ public class BlockProcessor {
 		int randShardingCount = 0;
 	    int clusteredShardingCount = 0;
 		//addr-id Map
-		HashMap<String,Integer> addr_id = new HashMap<String,Integer>();
-		int addrsCount = 0;
-		int epochAddrCount = 0;
+		HashMap<String,Integer> addr_id = null;
 		// id-cid 映射关系图
 	    HashMap<Integer,Integer> id_cid = null;
+		int addrsCount = 0;
+		int epochAddrCount = 0;		
 	    //start 时间
 		long start = System.currentTimeMillis();
 		if(round > 0) {
@@ -41,7 +41,7 @@ public class BlockProcessor {
 		for (File blockData : blockDir.listFiles()) {
 			long bstart = System.currentTimeMillis();
 			String line = null;
-			BufferedReader br;
+			BufferedReader br = null;
 			try {
 				br = new BufferedReader(new InputStreamReader(new FileInputStream(blockData)));
 				while ((line = br.readLine()) != null)
@@ -52,6 +52,15 @@ public class BlockProcessor {
 				System.out.println(blockData.getName() + "is not found!!");
 			} catch (IOException ioe) {
 				System.out.println(blockData.getName() + "reading error!!");
+			}finally {
+				if(br != null) {
+					try {
+						br.close();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
 			}
 			JSONArray blocksArr = block_json_obj.getJSONArray("blocks");
 			int blocks_size = blocksArr.size();
@@ -60,7 +69,7 @@ public class BlockProcessor {
 				// 一个块里的交易
 				JSONArray txs = block.getJSONArray("tx");
 				int tx_size = txs.size();
-				System.out.println("交易数:" + tx_size);
+				System.out.print("交易数:" + tx_size);
 				for (int j = 0; j < tx_size; j++){					
 				    HashSet<Integer> tx_ids = new HashSet<Integer>();
 				    HashSet<Integer> randCid = new HashSet<Integer>();
@@ -124,11 +133,11 @@ public class BlockProcessor {
 			 }					
 	       }
 			long bend = System.currentTimeMillis();
-			System.out.println(bend-bstart);
+			System.out.println("<----->single block cost time:" + (bend-bstart));
 		}		
 		System.out.print("This round 参与交易的地址数为:" + epochAddrCount);
 		//将addr-id映射关系持久化
-		this.saveAddrIdMap(addr_id, "");
+		this.saveAddrIdMap(addr_id, "/home/infosec/sharding_expt/addrid.txt");
 		addr_id.clear();
 		id_cid.clear();
 		//计算本周期的增量边
@@ -171,11 +180,13 @@ public class BlockProcessor {
 		    String edgeInfo = null;
 		    int edgeCounter = 0;		    
 		    while((edgeInfo = ebr.readLine()) != null) {
+		    	if(edgeInfo.trim().length() < 1)
+		    		break;
 		    	edgeCounter++;
 		    	String[] nodeWeight = edgeInfo.trim().split(" ");
 		    	int node1 = Integer.parseInt(nodeWeight[0]);
 		    	int node2 = Integer.parseInt(nodeWeight[1]);
-		    	float weight = Integer.parseInt(nodeWeight[2]);
+		    	float weight = Float.parseFloat(nodeWeight[2]);
 		    	int[] edge = new int[] {node1,node2};
 		    	if(edge_weight.containsKey(edge)) {
 		    		weight = (float) Math.pow(Math.pow(weight, 0.75)+edge_weight.get(edge),0.75);
@@ -185,17 +196,19 @@ public class BlockProcessor {
 		    			remainingEdges.put(edge, weight);
 		    		edge_weight.remove(edge);
 		    	}else {
-		    		remainingEdges.put(edge, (float) (weight*0.75));
+		    		float weightt = (float) (weight*0.75);
+		    		if(weight > 0.5)
+		    			remainingEdges.put(edge, (float) (weightt));
 		    	}
 		    	if(edgeCounter >= 10000000) {
 		    		for(int[] e:epochGraph.keySet()) {
 		    			float w = epochGraph.get(e);
-		    			String new_line = e[0] + " " + e[1] + " " + w;
+		    			String new_line = e[0] + " " + e[1] + " " + w + "\n";
 		    			ebw.write(new_line);
 		    		}
 		    		for(int[] e:remainingEdges.keySet()) {
 		    			float w = remainingEdges.get(e);
-		    			String new_line = e[0] + " " + e[1] + " " + w;
+		    			String new_line = e[0] + " " + e[1] + " " + w + "\n";
 		    			ebw.write(new_line);
 		    		}
 		    		remainingEdges.clear();
@@ -203,19 +216,19 @@ public class BlockProcessor {
 		    	}
 		    }
 		    preEdgeFile.delete();
-		    for(int[] edges:edge_weight.keySet()) {
-		    	String line = edges[0] + " " + edges[1] + " " + edge_weight.get(edges);
+		    for(int[] nodes:edge_weight.keySet()) {
+		    	String line = nodes[0] + " " + nodes[1] + " " + edge_weight.get(nodes) + "\n";
 		    	ebw.write(line);
+		    	if(edge_weight.get(nodes) <= 2)
+		    		edge_weight.remove(nodes);
 		    }
 		    }catch(FileNotFoundException e) {
 		    	e.printStackTrace();
-		    }
-		    
+		    }		    
 		    catch(IOException e) {
 		    	e.printStackTrace();
 		    }
-		    finally {
-		    	
+		    finally {   	
 		    		try {
 		    			if(ebr != null) 
 		    				ebr.close();
@@ -226,7 +239,6 @@ public class BlockProcessor {
 						e.printStackTrace();
 					};		    	
 		    }
-		    
 		    epochGraph.putAll(edge_weight);		    
 		    for(int i = 0;i < beforeClusteredShardStat.size();i++) {
 		    	randShardingCount += beforeClusteredShardStat.get(i);
@@ -236,8 +248,14 @@ public class BlockProcessor {
 		    }
 		    System.out.println("round" + round + "在未地址聚类前的跨片数为:" + randShardingCount);
 		    System.out.println("round" + round + "地址聚类后的跨片数为:" + clusteredShardingCount);
-		}else
-			epochGraph = edge_weight;
+		}else {
+			for(int[] nodes:edge_weight.keySet()) {
+				float weight = edge_weight.get(nodes);
+				if(edge_weight.get(nodes) > 2)
+					epochGraph.put(nodes, weight);
+			}
+			this.saveInitialEdges(edge_weight);
+		}
 		long end = System.currentTimeMillis();
 		System.out.println("round" + round + "读入数据共用时:(millsecond)" + (end - start));
 		return epochGraph;
@@ -249,13 +267,13 @@ public class BlockProcessor {
 		BufferedReader br = null;
 		try {
 			File idFile = new File("idCounterPath");
-			if(!idFile.exists())
-				idFile.createNewFile();
 			fis= new FileInputStream(idFile);
 			br = new BufferedReader(new InputStreamReader(fis));
 			String line = null;
 			while((line = br.readLine()) != null) {
-				String[] pair = line.split(" ");
+				if(line.trim().length() < 1)
+					break;
+				String[] pair = line.trim().split(" ");
 				String addr = pair[0];
 				int id = Integer.parseInt(pair[0]);
 				addr_id.put(addr,id);
@@ -287,7 +305,9 @@ public class BlockProcessor {
 			br = new BufferedReader(new InputStreamReader(fis));
 			String line = null;
 			while((line = br.readLine()) != null) {
-				String[] pair = line.split(" ");
+				if(line.trim().length() < 1)
+					break;
+				String[] pair = line.trim().split(" ");
 				int id = Integer.parseInt(pair[0]);
 				int cid = Integer.parseInt(pair[0]);
 				id_cid.put(id,cid);
@@ -312,13 +332,16 @@ public class BlockProcessor {
 	}
 	//addr-id持久化
 	public void saveAddrIdMap(HashMap<String,Integer> addrIdMap,String addrIdPath){
+		File addrIdFile = new File(addrIdPath);	
 		FileOutputStream fos = null;
 		BufferedWriter bw = null;
 		try {
-			fos= new FileOutputStream(new File(addrIdPath));
+			if(!addrIdFile.exists())
+				addrIdFile.createNewFile();
+			fos= new FileOutputStream(addrIdFile);
 			bw = new BufferedWriter(new OutputStreamWriter(fos));
 			for(String addr:addrIdMap.keySet()) {
-				String line = addr + " " + addrIdMap.get(addr);
+				String line = addr + " " + addrIdMap.get(addr) + "\n";
 				bw.write(line);
 			}
 		} catch (FileNotFoundException e) {
@@ -336,10 +359,33 @@ public class BlockProcessor {
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
-				}
-			
+			}			
 		}
 		
+	}
+	public void saveInitialEdges(HashMap<int[],Float> edges) {
+		File edgesFile = new File("/home/infosec/sharding_expt/edges0.txt");
+		BufferedWriter bw = null;
+		try {
+			if(!edgesFile.exists()) {
+				edgesFile.createNewFile();
+			}
+			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(edgesFile)));
+			for(int[] nodes:edges.keySet()) {
+				String edge = nodes[0] + " " + nodes[1] + " " + edges.get(nodes) + "\n";
+				bw.write(edge);
+			}
+		}catch(IOException e) {
+			e.printStackTrace();
+		}finally {
+				try {
+					if(bw != null)
+						bw.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+		}
 	}
 	// 细粒度的统计：是以块为单位的
 	// 但这里我们以单个交易额UTXO为单位进行统计可以减少内存的UTXO存储，

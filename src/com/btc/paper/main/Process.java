@@ -31,13 +31,4 @@ public class Process {
 	public static void main(String[] args) {
 		
 	}
-	public static void saveGraphPartition(ArrayList<HashSet<Integer>> clusters) {	
-		for(int i=0;i<clusters.size();i++) {
-			HashMap<Integer,Integer> idClusteridMap = new HashMap<Integer,Integer>();
-			for(Integer id:clusters.get(i)) {
-				idClusteridMap.put(id, i+1);
-			}
-			
-		}
-	}
 }
