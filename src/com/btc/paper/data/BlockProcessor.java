@@ -69,7 +69,7 @@ public class BlockProcessor {
 				// 一个块里的交易
 				JSONArray txs = block.getJSONArray("tx");
 				int tx_size = txs.size();
-				System.out.print("交易数:" + tx_size);
+				System.out.println("交易数:" + tx_size);
 				for (int j = 0; j < tx_size; j++){					
 				    HashSet<Integer> tx_ids = new HashSet<Integer>();
 				    HashSet<Integer> randCid = new HashSet<Integer>();
@@ -387,8 +387,6 @@ public class BlockProcessor {
 				}
 		}
 	}
-	// 细粒度的统计：是以块为单位的
-	// 但这里我们以单个交易额UTXO为单位进行统计可以减少内存的UTXO存储，
 	public Short getRandShards(String utxo, int bitCount) {
 			byte[] byteBuffer = null;
 			try {

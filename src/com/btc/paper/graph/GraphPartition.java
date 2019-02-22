@@ -199,13 +199,13 @@ public class GraphPartition {
 			weight_table.put(thisEnd, weights);
 		}
 	}
-	public void freshClusters(HashMap<Integer,Integer> clusters,int round) {
+	public static void freshClusters(HashMap<Integer,Integer> clusters,int round,int clusterNum) {
 		if(round == 0) {
-		 this.saveIdCidMap(clusters);
-		 return; 
+			saveIdCidMap(clusters);
+			return; 
 		}	
 		String oldIdCidFilePath = "/home/infosec/sharding_expt/idCid" + (round - 1) + ".txt";
-		String newidCidFilePath = "/home/infosec/sharding_expt/idCid" + (round - 1) + ".txt";
+		String newidCidFilePath = "/home/infosec/sharding_expt/idCid" + round + ".txt";
 		File oldIdCidFile = new File(oldIdCidFilePath);
 		File newIdCidFile = new File(newidCidFilePath);
 		if(!newIdCidFile.exists())
@@ -222,6 +222,10 @@ public class GraphPartition {
 			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(newIdCidFile)));
 			ArrayList<HashMap<Integer,Integer>> old2NewStats = new ArrayList<HashMap<Integer,Integer>>();
 			ArrayList<ArrayList<Integer>> remainingAddrIds = new ArrayList<ArrayList<Integer>>();
+			for(int i = 0;i<clusterNum;i++) {
+				old2NewStats.add(new HashMap<Integer,Integer>());
+				remainingAddrIds.add(new ArrayList<Integer>());
+			}
 			String idCidLine = null;
 			while((idCidLine = br.readLine())!= null) {
 				if(idCidLine.trim().length() < 1)
@@ -279,7 +283,7 @@ public class GraphPartition {
 			}
 		}
 	}
-	public void saveIdCidMap(HashMap<Integer,Integer> idCidPairs) {
+	public static void saveIdCidMap(HashMap<Integer,Integer> idCidPairs) {
 		File idCidFilePath = new File("/home/infosec/sharding_expt/idCid0.txt");
 		BufferedWriter bw = null;
 		try {

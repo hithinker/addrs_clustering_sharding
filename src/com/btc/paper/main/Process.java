@@ -2,10 +2,9 @@
 
 package com.btc.paper.main;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 
+import com.btc.paper.graph.GraphPartition;
 
 //实验指标计算
 public class Process {
@@ -29,6 +28,7 @@ public class Process {
 	
 	*/
 	public static void main(String[] args) {
-		
+		HashMap<Integer, Integer> results = GraphPartition.Partition(1024, 0);
+		GraphPartition.freshClusters(results, 0, 2014);
 	}
 }
