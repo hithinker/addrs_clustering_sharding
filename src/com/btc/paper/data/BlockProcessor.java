@@ -14,7 +14,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 
 public class BlockProcessor {
-	public HashMap<int[],Float> readBlock(String dir, int round){
+	public HashMap<Integer,HashMap<Integer,Float>> readBlock(String dir, int round){
 		File blockDir = new File(dir);
 		StringBuilder sb = new StringBuilder();
 		JSONObject block_json_obj = null;
@@ -24,11 +24,12 @@ public class BlockProcessor {
 		int randShardingCount = 0;
 	    int clusteredShardingCount = 0;
 		//addr-id Map
-		HashMap<String,Integer> addr_id = null;
+		HashMap<String,Integer> addr_id = new HashMap<String,Integer>();
 		// id-cid 映射关系图
 	    HashMap<Integer,Integer> id_cid = null;
 		int addrsCount = 0;
-		int epochAddrCount = 0;		
+		int epochAddrCount = 0;	
+		int txsCount = 0;
 	    //start 时间
 		long start = System.currentTimeMillis();
 		if(round > 0) {
@@ -39,7 +40,6 @@ public class BlockProcessor {
 		//注意是LinkedList,记录每个交易内的地址
 		LinkedList<HashSet<Integer>> idsList = new LinkedList<HashSet<Integer>>();
 		for (File blockData : blockDir.listFiles()) {
-			long bstart = System.currentTimeMillis();
 			String line = null;
 			BufferedReader br = null;
 			try {
@@ -69,7 +69,7 @@ public class BlockProcessor {
 				// 一个块里的交易
 				JSONArray txs = block.getJSONArray("tx");
 				int tx_size = txs.size();
-				System.out.println("交易数:" + tx_size);
+				txsCount += tx_size;
 				for (int j = 0; j < tx_size; j++){					
 				    HashSet<Integer> tx_ids = new HashSet<Integer>();
 				    HashSet<Integer> randCid = new HashSet<Integer>();
@@ -132,41 +132,48 @@ public class BlockProcessor {
 					idsList.add(tx_ids);
 			 }					
 	       }
-			long bend = System.currentTimeMillis();
-			System.out.println("<----->single block cost time:" + (bend-bstart));
-		}		
-		System.out.print("This round 参与交易的地址数为:" + epochAddrCount);
+		}
+		System.out.println("This round 参与交易总数为:" + txsCount);
+		System.out.println("This round 参与交易的地址数为:" + epochAddrCount);
 		//将addr-id映射关系持久化
 		this.saveAddrIdMap(addr_id, "/home/infosec/sharding_expt/addrid.txt");
 		addr_id.clear();
-		id_cid.clear();
+		if(round > 0)
+			id_cid.clear();
 		//计算本周期的增量边
-		HashMap<int[],Float> edge_weight = new HashMap<int[],Float>();
+		HashMap<Integer,HashMap<Integer,Float>> edge_weight = new HashMap<Integer,HashMap<Integer,Float>>();
 		for(Iterator<HashSet<Integer>> idsIterator = idsList.iterator();idsIterator.hasNext();) {
 			HashSet<Integer> ids = idsIterator.next();
-			idsIterator.remove();
+			idsIterator.remove();			
 			for(Iterator<Integer> idIterator = ids.iterator();idIterator.hasNext();) {
 				int id = idIterator.next();
 				idIterator.remove();
 				for(int iid:ids) {
-					int[] key = new int[2];
 					int node1 = id;
 					int node2 = iid;
 					if(id > iid) {
 						node1 = iid;
 						node2 = id;
 				    }
-					key[0] = node1;
-					key[1] = node2;
-					if(edge_weight.containsKey(key))
-						edge_weight.put(key, edge_weight.get(key) + 1);
-					else
-						edge_weight.put(key, (float) 1);
+					if(edge_weight.containsKey(node1))
+						if(edge_weight.get(node1).containsKey(node2))
+							edge_weight.get(node1).put(node2, edge_weight.get(node1).get(node2) + 1);
+						else
+							edge_weight.get(node1).put(node2, (float) 1);	
+					else {
+						HashMap<Integer,Float> singleModeMap = new HashMap<Integer,Float>();
+						singleModeMap.put(node2, (float) 1);
+						edge_weight.put(node1,singleModeMap);
+					}
 			}
-		}
+		}   
 	}
 		idsList.clear();
-		HashMap<int[],Float> epochGraph = new HashMap<int[],Float>(); 
+		int edgeCount = 0; 
+		for(int endPoint:edge_weight.keySet())
+			edgeCount += (edge_weight.get(endPoint).size());
+		System.out.println(edgeCount);
+		HashMap<Integer,HashMap<Integer,Float>> epochGraph = new HashMap<Integer,HashMap<Integer,Float>>(); 
 		//更新历史图
 		if(round > 0) {
 			BufferedReader ebr = null;
@@ -176,7 +183,7 @@ public class BlockProcessor {
 			File newEdgeFile = new File("/home/infosec/sharding_expt/edges" + round + ".txt");
 			ebr = new BufferedReader(new InputStreamReader(new FileInputStream(preEdgeFile)));
 		    ebw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(newEdgeFile)));
-		    HashMap<int[],Float> remainingEdges = new HashMap<int[],Float>();
+		    HashMap<Integer,HashMap<Integer,Float>> remainingEdges = new HashMap<Integer,HashMap<Integer,Float>>();
 		    String edgeInfo = null;
 		    int edgeCounter = 0;		    
 		    while((edgeInfo = ebr.readLine()) != null) {
@@ -187,40 +194,71 @@ public class BlockProcessor {
 		    	int node1 = Integer.parseInt(nodeWeight[0]);
 		    	int node2 = Integer.parseInt(nodeWeight[1]);
 		    	float weight = Float.parseFloat(nodeWeight[2]);
-		    	int[] edge = new int[] {node1,node2};
-		    	if(edge_weight.containsKey(edge)) {
-		    		weight = (float) Math.pow(Math.pow(weight, 0.75)+edge_weight.get(edge),0.75);
-		    		if(weight > 2)
-		    			epochGraph.put(edge, weight);
+		    	if(edge_weight.containsKey(node1) && edge_weight.get(node1).containsKey(node2)) {
+		    		weight = (float) Math.pow(Math.pow(weight, 0.75)+edge_weight.get(node1).get(node2),0.75);
+		    		if(weight > 1)
+		    			if(epochGraph.containsKey(node1))
+		    				epochGraph.get(node1).put(node2, weight);								
+						else {
+							HashMap<Integer,Float> singleNodeMap = new HashMap<Integer,Float>();
+							singleNodeMap.put(node2, weight);
+							epochGraph.put(node1,singleNodeMap);
+						}
 		    		else
-		    			remainingEdges.put(edge, weight);
-		    		edge_weight.remove(edge);
+		    			if(remainingEdges.containsKey(node1))
+							edge_weight.get(node1).put(node2, weight);								
+						else {
+							HashMap<Integer,Float> singleNodeMap = new HashMap<Integer,Float>();
+							singleNodeMap.put(node2, weight);
+							remainingEdges.put(node1,singleNodeMap);
+						}
+		    		edge_weight.get(node1).remove(node2);
 		    	}else {
 		    		float weightt = (float) (weight*0.75);
-		    		if(weight > 0.5)
-		    			remainingEdges.put(edge, (float) (weightt));
+		    		if(weightt > 0.5)
+		    			if(remainingEdges.containsKey(node1))
+							edge_weight.get(node1).put(node2, weight);								
+						else {
+							HashMap<Integer,Float> singleNodeMap = new HashMap<Integer,Float>();
+							singleNodeMap.put(node2, weight);
+							remainingEdges.put(node1,singleNodeMap);
+						}
 		    	}
 		    	if(edgeCounter >= 10000000) {
-		    		for(int[] e:epochGraph.keySet()) {
-		    			float w = epochGraph.get(e);
-		    			String new_line = e[0] + " " + e[1] + " " + w + "\n";
-		    			ebw.write(new_line);
+		    		for(int node:epochGraph.keySet()) {
+		    			HashMap<Integer,Float> singleNodeMap = epochGraph.get(node);
+		    			for(int anotherNode:singleNodeMap.keySet()) {
+		    				String new_line = node + " " + anotherNode + " " + singleNodeMap.get(anotherNode) + "\n";
+		    				ebw.write(new_line);
+		    			}
 		    		}
-		    		for(int[] e:remainingEdges.keySet()) {
-		    			float w = remainingEdges.get(e);
-		    			String new_line = e[0] + " " + e[1] + " " + w + "\n";
-		    			ebw.write(new_line);
+		    		for(int node:remainingEdges.keySet()) {
+		    			HashMap<Integer,Float> singleNodeMap = remainingEdges.get(node);
+		    			for(int anotherNode:singleNodeMap.keySet()) {
+		    				String new_line = node + " " + anotherNode + " " + singleNodeMap.get(anotherNode) + "\n";
+		    				ebw.write(new_line);
+		    			}
 		    		}
 		    		remainingEdges.clear();
 		    		edgeCounter = 0;
 		    	}
 		    }
 		    preEdgeFile.delete();
-		    for(int[] nodes:edge_weight.keySet()) {
-		    	String line = nodes[0] + " " + nodes[1] + " " + edge_weight.get(nodes) + "\n";
-		    	ebw.write(line);
-		    	if(edge_weight.get(nodes) <= 2)
-		    		edge_weight.remove(nodes);
+		    for(int node:edge_weight.keySet()) {
+		    	HashMap<Integer,Float> adjList = edge_weight.get(node);		    	
+		    	for(int adjNode:adjList.keySet()) {
+		    		float weight = adjList.get(adjNode);
+		    		String line = node + " " + adjNode + " " + weight + "\n";
+		    		ebw.write(line);
+		    		if(weight > 1)
+		    			if(epochGraph.containsKey(node))
+			    			epochGraph.get(node).put(adjNode, weight);
+			    		else {
+			    			HashMap<Integer,Float> newMap = new HashMap<Integer,Float>();
+			    			newMap.put(adjNode,weight);
+			    			epochGraph.put(node, newMap);
+			    		}
+		      }
 		    }
 		    }catch(FileNotFoundException e) {
 		    	e.printStackTrace();
@@ -238,8 +276,7 @@ public class BlockProcessor {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					};		    	
-		    }
-		    epochGraph.putAll(edge_weight);		    
+		    }	    
 		    for(int i = 0;i < beforeClusteredShardStat.size();i++) {
 		    	randShardingCount += beforeClusteredShardStat.get(i);
 		    }
@@ -249,10 +286,20 @@ public class BlockProcessor {
 		    System.out.println("round" + round + "在未地址聚类前的跨片数为:" + randShardingCount);
 		    System.out.println("round" + round + "地址聚类后的跨片数为:" + clusteredShardingCount);
 		}else {
-			for(int[] nodes:edge_weight.keySet()) {
-				float weight = edge_weight.get(nodes);
-				if(edge_weight.get(nodes) > 2)
-					epochGraph.put(nodes, weight);
+			for(int node:edge_weight.keySet()) {
+				HashMap<Integer,Float> adjList= edge_weight.get(node);
+				for(int adjNode:adjList.keySet()) {
+					float weight = adjList.get(adjNode);
+					if(weight > 1)
+						if(epochGraph.containsKey(node)) {
+							epochGraph.get(node).put(adjNode, weight);
+						}
+						else {
+							HashMap<Integer,Float> newMap = new HashMap<Integer,Float>();
+							newMap.put(adjNode,weight);
+							epochGraph.put(node,newMap);
+						}
+			  }
 			}
 			this.saveInitialEdges(edge_weight);
 		}
@@ -363,7 +410,7 @@ public class BlockProcessor {
 		}
 		
 	}
-	public void saveInitialEdges(HashMap<int[],Float> edges) {
+	public void saveInitialEdges(HashMap<Integer, HashMap<Integer, Float>> edge_weight) {
 		File edgesFile = new File("/home/infosec/sharding_expt/edges0.txt");
 		BufferedWriter bw = null;
 		try {
@@ -371,9 +418,13 @@ public class BlockProcessor {
 				edgesFile.createNewFile();
 			}
 			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(edgesFile)));
-			for(int[] nodes:edges.keySet()) {
-				String edge = nodes[0] + " " + nodes[1] + " " + edges.get(nodes) + "\n";
-				bw.write(edge);
+			for(int node:edge_weight.keySet()) {
+				HashMap<Integer,Float> adjList = edge_weight.get(node);
+				for(int anotherNode:adjList.keySet()) {
+					float weight = adjList.get(anotherNode);
+				    String edge = node + " " + anotherNode + " " + weight + "\n";
+				    bw.write(edge);
+				}
 			}
 		}catch(IOException e) {
 			e.printStackTrace();

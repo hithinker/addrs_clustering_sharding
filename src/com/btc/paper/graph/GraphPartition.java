@@ -40,9 +40,10 @@ public class GraphPartition {
 		
 		ArrayList<HashMap<Integer, Float>> remainsWeightToCluster = new ArrayList<HashMap<Integer, Float>>();
 		
+		long start = System.currentTimeMillis();
 		// begin of the cluster partition
 		for (int i = 0; i < clusterNum; ++i) {
-			
+			long cStart = System.currentTimeMillis();
 			HashSet<Integer> cluster = new HashSet<Integer>();
 			HashMap<Integer, Float> weightToCluster = new HashMap<Integer, Float>();
 			double innerWeight = 0;
@@ -147,6 +148,8 @@ public class GraphPartition {
 			for (int node : cluster) {
 				output.put(node, i);
 			}
+			long cEnd = System.currentTimeMillis();
+			System.out.println(i + "th partition costs:" + (cEnd - cStart));
 		}
 		
 		// the remaining nodes is allocated to a cluster with biggest weight
@@ -164,6 +167,8 @@ public class GraphPartition {
 			//result.set(choice, newCluster);
 			output.put(node, choice);
 		}
+		long end = System.currentTimeMillis();
+		System.out.println("graph Partition costs:" + (end - start));
 		return output;
 	}
 	

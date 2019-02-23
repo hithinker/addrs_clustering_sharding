@@ -11,30 +11,37 @@ public class Graph {
 	public void createGraph(int round) {
 		graph = new HashMap<Integer,ArrayList<Float>>();
 		BlockProcessor blkPcs = new BlockProcessor();
-		HashMap<int[],Float> graphEdges = blkPcs.readBlock("/home/infosec/sharding_expt/data0_999",round);
-	    for(int[] nodes:graphEdges.keySet()) {
-	    	int node1 = nodes[0];
-	    	int node2 = nodes[1];
-	    	float weight = graphEdges.get(nodes);
-	    	if(graph.containsKey(node1)) {
-	    		graph.get(node1).add((float) node2);
-	    		graph.get(node1).add(weight);
+		String dataDir = "data" + 200*round + "_" + (200*(round+1) - 1);
+		HashMap<Integer, HashMap<Integer, Float>> graphEdges = blkPcs.readBlock("/home/infosec/sharding_expt/data/" + dataDir,round);
+		int edgeCount = 0;
+		for(int node:graphEdges.keySet()) {
+			edgeCount += graphEdges.get(node).size();
+		}
+		System.out.println("参与图划分边数:"  + edgeCount);
+	    for(int node:graphEdges.keySet()) {
+	    	HashMap<Integer, Float> adjList = graphEdges.get(node);
+	    	for(int endNode:adjList.keySet()) { 
+	    		float weight = adjList.get(endNode);
+	    		if(graph.containsKey(node)) {
+	    			graph.get(node).add((float) endNode);
+	    			graph.get(node).add(weight);
+	    		}
+	    		else {
+	    			ArrayList<Float> adjL = new ArrayList<Float>();
+	    			adjL.add((float) endNode);
+	    			adjL.add(weight);
+	    			graph.put(node, adjL);
+	    		}
+	    		if(graph.containsKey(endNode)) {
+	    			graph.get(endNode).add((float) node);
+	    			graph.get(endNode).add(weight);
+	    		}
+	    		else {
+	    			ArrayList<Float> adjL = new ArrayList<Float>();
+	    			adjL.add((float) node);
+	    			adjL.add(weight);
+	    			graph.put(endNode, adjL);
 	    	}
-	    	else {
-	    		ArrayList<Float> adjList = new ArrayList<Float>();
-	    		adjList.add((float) node2);
-	    		adjList.add(weight);
-	    		graph.put(node1, adjList);
-	    	}
-	    	if(graph.containsKey(node2)) {
-	    		graph.get(node2).add((float) node1);
-	    		graph.get(node2).add(weight);
-	    	}
-	    	else {
-	    		ArrayList<Float> adjList = new ArrayList<Float>();
-	    		adjList.add((float) node1);
-	    		adjList.add(weight);
-	    		graph.put(node2, adjList);
 	    	}
 	    }
 	}
