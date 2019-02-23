@@ -37,6 +37,7 @@ public class GraphPartition {
 		
 		// first extract all edges/nodes from the graph to form connect table and compute weightSum.
 		generateStructures(round);
+		int nodeNum = nodes.size();
 		
 		ArrayList<HashMap<Integer, Float>> remainsWeightToCluster = new ArrayList<HashMap<Integer, Float>>();
 		
@@ -49,7 +50,7 @@ public class GraphPartition {
 			double innerWeight = 0;
 			double partitionWeight = 0;
 			
-			while (innerWeight + partitionWeight / 2 < weightSum / (clusterNum + 1) && edges.isEmpty() == false) {
+			while (innerWeight + partitionWeight / 2 < weightSum / (clusterNum + 1) && cluster.size() < nodeNum / (clusterNum + 1) && edges.isEmpty() == false) {
 				// choose the max weight edge
 				long startNodes = 0;
 				double startWeight = 0;
@@ -109,7 +110,7 @@ public class GraphPartition {
 				
 				// cluster grows, note that the partition can end before weight reach the set value
 				// if there is no more node connected to the cluster.
-				while (innerWeight + partitionWeight / 2 < weightSum / (clusterNum + 1) && weightToCluster.isEmpty() == false) {
+				while (innerWeight + partitionWeight / 2 < weightSum / (clusterNum + 1) && weightToCluster.isEmpty() == false && cluster.size() < nodeNum / (clusterNum + 1)) {
 					int newNode = 0;
 					float newNodeWeightToCluster = 0;
 					for (Map.Entry<Integer, Float> entry : weightToCluster.entrySet()) {
@@ -141,6 +142,23 @@ public class GraphPartition {
 					}
 					innerWeight += newNodeWeightToCluster;
 					partitionWeight -= newNodeWeightToCluster;
+				}
+			}
+			if (edges.isEmpty() == true) {
+				for (int node : nodes) {
+					if (innerWeight + partitionWeight / 2 >= weightSum / (clusterNum + 1) || cluster.size() >= nodeNum / (clusterNum + 1))
+						break;
+					nodes.remove(node);
+					cluster.add(node);
+					connections = connect_table.get(node);
+					weights = weight_table.get(node);
+					for (int j = 0; j < connections.size(); j++) {
+						int another = connections.get(j);
+						float weight = weights.get(j);
+						if (cluster.contains(another) == false) {
+							partitionWeight += weight;
+						}
+					}
 				}
 			}
 			remainsWeightToCluster.add(weightToCluster);
