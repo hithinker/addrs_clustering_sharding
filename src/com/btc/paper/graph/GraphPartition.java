@@ -150,8 +150,8 @@ public class GraphPartition {
 						break;
 					nodes.remove(node);
 					cluster.add(node);
-					connections = connect_table.get(node);
-					weights = weight_table.get(node);
+					ArrayList<Integer> connections = connect_table.get(node);
+					ArrayList<Float> weights = weight_table.get(node);
 					for (int j = 0; j < connections.size(); j++) {
 						int another = connections.get(j);
 						float weight = weights.get(j);
