@@ -35,7 +35,7 @@ public class BlockProcessor {
 		if(round > 0) {
 			addr_id = this.getAddrIdMap("/home/infosec/sharding_expt/addrid.txt");
 			addrsCount = addr_id.size();
-			id_cid = this.getIdCid("/home/infosec/sharding_expt/idcid" + (round - 1) + ".txt");
+			id_cid = this.getIdCid("/home/infosec/sharding_expt/idCid" + (round - 1) + ".txt");
 		}
 		//注意是LinkedList,记录每个交易内的地址
 		LinkedList<HashSet<Integer>> idsList = new LinkedList<HashSet<Integer>>();
@@ -134,7 +134,7 @@ public class BlockProcessor {
 	       }
 		}
 		System.out.println("This round 参与交易总数为:" + txsCount);
-		System.out.println("This round 参与交易的地址数为:" + epochAddrCount);
+		System.out.println("This round 参与交易的新地址数为:" + epochAddrCount);
 		//将addr-id映射关系持久化
 		this.saveAddrIdMap(addr_id, "/home/infosec/sharding_expt/addrid.txt");
 		addr_id.clear();
@@ -217,10 +217,10 @@ public class BlockProcessor {
 		    		float weightt = (float) (weight*0.75);
 		    		if(weightt > 0.5)
 		    			if(remainingEdges.containsKey(node1))
-							edge_weight.get(node1).put(node2, weight);								
+		    				remainingEdges.get(node1).put(node2, weightt);								
 						else {
 							HashMap<Integer,Float> singleNodeMap = new HashMap<Integer,Float>();
-							singleNodeMap.put(node2, weight);
+							singleNodeMap.put(node2, weightt);
 							remainingEdges.put(node1,singleNodeMap);
 						}
 		    	}
@@ -313,7 +313,7 @@ public class BlockProcessor {
 		FileInputStream fis = null;
 		BufferedReader br = null;
 		try {
-			File idFile = new File("idCounterPath");
+			File idFile = new File(idCounterPath);
 			fis= new FileInputStream(idFile);
 			br = new BufferedReader(new InputStreamReader(fis));
 			String line = null;
@@ -322,7 +322,7 @@ public class BlockProcessor {
 					break;
 				String[] pair = line.trim().split(" ");
 				String addr = pair[0];
-				int id = Integer.parseInt(pair[0]);
+				int id = Integer.parseInt(pair[1]);
 				addr_id.put(addr,id);
 			}
 		} catch (FileNotFoundException e) {

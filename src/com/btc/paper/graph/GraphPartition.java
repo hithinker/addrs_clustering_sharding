@@ -266,6 +266,8 @@ public class GraphPartition {
 					bw.write(idCidPair);
 				}
 				else {
+					if(cId < 0 || cId > 1023)
+						System.out.println(cId);
 					remainingAddrIds.get(cId).add(aId);
 				}
 			}
@@ -307,6 +309,7 @@ public class GraphPartition {
 		}
 	}
 	public static void saveIdCidMap(HashMap<Integer,Integer> idCidPairs) {
+		HashMap<Integer,Integer> idCidStat = new HashMap<Integer,Integer>();
 		File idCidFilePath = new File("/home/infosec/sharding_expt/idCid0.txt");
 		BufferedWriter bw = null;
 		try {
@@ -314,9 +317,17 @@ public class GraphPartition {
 			if(!idCidFilePath.exists())
 				idCidFilePath.createNewFile();
             for(int id:idCidPairs.keySet()) {
-            	String idCidStr = id + " " + idCidPairs.get(id) + "\n";
+            	int cId = idCidPairs.get(id);
+            	String idCidStr = id + " " + cId + "\n";
+            	if(!idCidStat.containsKey(cId))
+            		idCidStat.put(cId, 1);
+            	else
+            		idCidStat.put(cId, idCidStat.get(cId) + 1);
             	bw.write(idCidStr);
 		    }
+            for(int cid:idCidStat.keySet()) {
+            	System.out.println(cid + ":" + idCidStat.get(cid));
+            }
 		}catch(FileNotFoundException e) {
 			e.getStackTrace();
 		} 

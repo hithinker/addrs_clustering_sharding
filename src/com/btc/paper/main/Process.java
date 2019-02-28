@@ -28,7 +28,9 @@ public class Process {
 	
 	*/
 	public static void main(String[] args) {
-		HashMap<Integer, Integer> results = GraphPartition.Partition(1024, 0);
-		GraphPartition.freshClusters(results, 0, 2014);
+		for(int i = 0;i<5;i++) {
+		HashMap<Integer, Integer> results = GraphPartition.Partition(1024, i);
+		GraphPartition.freshClusters(results, i, 1024);
+		}
 	}
 }
