@@ -39,6 +39,7 @@ public class BlockProcessor {
 		}
 		//注意是LinkedList,记录每个交易内的地址
 		LinkedList<HashSet<Integer>> idsList = new LinkedList<HashSet<Integer>>();
+		HashSet<Integer> targetedIds = new HashSet<Integer>(); 
 		for (File blockData : blockDir.listFiles()) {
 			String line = null;
 			BufferedReader br = null;
@@ -90,15 +91,13 @@ public class BlockProcessor {
 								}
 								tx_ids.add(addr_id.get(addr));
 								if(round > 0) {
+									if(id_cid.containsKey(addr_id.get(addr))) {
 									String utxo = prev_out.getString("tx_index") + " " + addr + prev_out.getString("value")
 										+ prev_out.getString("script");
 									int rcid = this.getRandShards(utxo, 10);
 									randCid.add(rcid);
-									if(id_cid.containsKey(addr_id.get(addr)))
-										clusteredId.add(id_cid.get(addr_id.get(addr)));
-									else
-										clusteredId.add(rcid);
-										 
+								    clusteredId.add(id_cid.get(addr_id.get(addr)));
+									}	 
 								}							
 							}
 						}
@@ -116,14 +115,14 @@ public class BlockProcessor {
 							}
 							tx_ids.add(addr_id.get(addr));
 							if(round > 0) {
+								if(id_cid.containsKey(addr_id.get(addr))){
+								targetedIds.add(addr_id.get(addr));
 								String utxo = out.getString("tx_index") + " " + addr + out.getString("value")
 									+ out.getString("script");
 								int rcid = this.getRandShards(utxo, 10);
 								randCid.add(rcid);
-								if(id_cid.containsKey(addr_id.get(addr)))
-									clusteredId.add(id_cid.get(addr_id.get(addr)));
-								else
-									clusteredId.add(rcid);
+							    clusteredId.add(id_cid.get(addr_id.get(addr)));								
+								}
 							}
 						}
 					}
@@ -135,6 +134,7 @@ public class BlockProcessor {
 		}
 		System.out.println("This round 参与交易总数为:" + txsCount);
 		System.out.println("This round 参与交易的新地址数为:" + epochAddrCount);
+		System.out.println("This round 参与交易的旧地址数为:" + targetedIds.size());
 		//将addr-id映射关系持久化
 		this.saveAddrIdMap(addr_id, "/home/infosec/sharding_expt/addrid.txt");
 		addr_id.clear();
