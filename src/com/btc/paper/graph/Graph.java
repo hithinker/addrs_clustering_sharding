@@ -7,18 +7,18 @@ import com.btc.paper.data.BlockProcessor;
 
 //方法:1.构图 
 public class Graph {
-	private HashMap<Integer,ArrayList<Float>> graph;
+	private HashMap<Integer,HashMap<Integer,Float>> graph;
 	public void createGraph(int round) {
-		graph = new HashMap<Integer,ArrayList<Float>>();
+		graph = new HashMap<Integer,HashMap<Integer,Float>>();
 		BlockProcessor blkPcs = new BlockProcessor();
 		String dataDir = "data" + 200*round + "_" + (200*(round+1) - 1);
-		HashMap<Integer, HashMap<Integer, Float>> graphEdges = blkPcs.readBlock("/home/infosec/sharding_expt/data/" + dataDir,round);
+		graph = blkPcs.readBlock("/home/infosec/sharding_expt/data/" + dataDir,round);
 		int edgeCount = 0;
-		for(int node:graphEdges.keySet()) {
-			edgeCount += graphEdges.get(node).size();
+		for(int node:graph.keySet()) {
+			edgeCount += graph.get(node).size();
 		}
 		System.out.println("参与图划分边数:"  + edgeCount);
-	    for(int node:graphEdges.keySet()) {
+	    /*for(int node:graphEdges.keySet()) {
 	    	HashMap<Integer, Float> adjList = graphEdges.get(node);
 	    	for(int endNode:adjList.keySet()) { 
 	    		float weight = adjList.get(endNode);
@@ -43,9 +43,9 @@ public class Graph {
 	    			graph.put(endNode, adjL);
 	    	}
 	    	}
-	    }
+	    }*/
 	}
-	public HashMap<Integer,ArrayList<Float>>  getEdgesInfos(){
+	public HashMap<Integer,HashMap<Integer,Float>>  getEdgesInfos(){
 		return graph;
 	}
 }
