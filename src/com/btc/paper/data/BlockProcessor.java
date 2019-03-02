@@ -290,7 +290,7 @@ public class BlockProcessor {
 				HashMap<Integer,Float> adjList= edge_weight.get(node);
 				for(int adjNode:adjList.keySet()) {
 					float weight = adjList.get(adjNode);
-					if(weight > 1)
+					// ²»¿¼ÂÇÌõ¼þ>1 if(weight > 1)
 						if(epochGraph.containsKey(node)) {
 							epochGraph.get(node).put(adjNode, weight);
 						}
