@@ -196,7 +196,7 @@ public class BlockProcessor {
 		    	float weight = Float.parseFloat(nodeWeight[2]);
 		    	if(edge_weight.containsKey(node1) && edge_weight.get(node1).containsKey(node2)) {
 		    		weight = (float) Math.pow(Math.pow(weight, 0.75)+edge_weight.get(node1).get(node2),0.75);
-		    		if(weight > 1)
+		    		// 去除条件>1 if(weight > 1)
 		    			if(epochGraph.containsKey(node1))
 		    				epochGraph.get(node1).put(node2, weight);								
 						else {
@@ -204,14 +204,14 @@ public class BlockProcessor {
 							singleNodeMap.put(node2, weight);
 							epochGraph.put(node1,singleNodeMap);
 						}
-		    		else
+		    		/*  不考虑条件>1 else
 		    			if(remainingEdges.containsKey(node1))
 							edge_weight.get(node1).put(node2, weight);								
 						else {
 							HashMap<Integer,Float> singleNodeMap = new HashMap<Integer,Float>();
 							singleNodeMap.put(node2, weight);
 							remainingEdges.put(node1,singleNodeMap);
-						}
+						}*/
 		    		edge_weight.get(node1).remove(node2);
 		    	}else {
 		    		float weightt = (float) (weight*0.75);
@@ -250,7 +250,7 @@ public class BlockProcessor {
 		    		float weight = adjList.get(adjNode);
 		    		String line = node + " " + adjNode + " " + weight + "\n";
 		    		ebw.write(line);
-		    		if(weight > 1)
+		    		// 不考虑条件>1 if(weight > 1)
 		    			if(epochGraph.containsKey(node))
 			    			epochGraph.get(node).put(adjNode, weight);
 			    		else {
