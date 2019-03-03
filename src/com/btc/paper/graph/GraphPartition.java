@@ -790,6 +790,7 @@ public static HashMap<Integer, Integer> Partition4(int clusterNum,int round) {
             for(int cid:idCidStat.keySet()) {
             	System.out.println(cid + ":" + idCidStat.get(cid));
             }
+            bw.flush();
 		}catch(FileNotFoundException e) {
 			e.getStackTrace();
 		} 

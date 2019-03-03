@@ -32,7 +32,7 @@ public class Process {
 		if (args.length > 0)
 			clusterNum = Integer.parseInt(args[0]);
 		for(int i = 0;i<5;i++) {
-		HashMap<Integer, Integer> results = GraphPartition.Partition4(clusterNum, i);
+		HashMap<Integer, Integer> results = GraphPartition.Partition3(clusterNum, i);
 		GraphPartition.freshClusters(results, i, clusterNum);
 		}
 	}
