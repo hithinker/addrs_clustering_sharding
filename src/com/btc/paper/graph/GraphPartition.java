@@ -769,35 +769,35 @@ public static HashMap<Integer, Integer> Partition4(int clusterNum,int round) {
 			}
 		}
 	}
-	public static void saveIdCidMap(HashMap<Integer,Integer> idCidPairs) {
-		HashMap<Integer,Integer> idCidStat = new HashMap<Integer,Integer>();
+
+	public static void saveIdCidMap(HashMap<Integer, Integer> idCidPairs) {
+		HashMap<Integer, Integer> idCidStat = new HashMap<Integer, Integer>();
 		File idCidFilePath = new File("/home/infosec/sharding_expt/idCid0.txt");
 		System.out.println("write to file /home/infosec/sharding_expt/idCid0.txt");
 		BufferedWriter bw = null;
 		try {
 			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(idCidFilePath)));
-			if(!idCidFilePath.exists())
+			if (!idCidFilePath.exists())
 				idCidFilePath.createNewFile();
-            for(int id:idCidPairs.keySet()) {
-            	int cId = idCidPairs.get(id);
-            	String idCidStr = id + " " + cId + "\n";
-            	if(!idCidStat.containsKey(cId))
-            		idCidStat.put(cId, 1);
-            	else
-            		idCidStat.put(cId, idCidStat.get(cId) + 1);
-            	bw.write(idCidStr);
-		    }
-            for(int cid:idCidStat.keySet()) {
-            	System.out.println(cid + ":" + idCidStat.get(cid));
-            }           
-		}catch(FileNotFoundException e) {
+			for (int id : idCidPairs.keySet()) {
+				int cId = idCidPairs.get(id);
+				String idCidStr = id + " " + cId + "\n";
+				if (!idCidStat.containsKey(cId))
+					idCidStat.put(cId, 1);
+				else
+					idCidStat.put(cId, idCidStat.get(cId) + 1);
+				bw.write(idCidStr);
+			}
+			for (int cid : idCidStat.keySet()) {
+				System.out.println(cid + ":" + idCidStat.get(cid));
+			}
+		} catch (FileNotFoundException e) {
 			e.getStackTrace();
-		} 
-		catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-		}finally {			
-			if(bw != null)
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			if (bw != null)
 				try {
 					bw.flush();
 					bw.close();
