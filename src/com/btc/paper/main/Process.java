@@ -28,9 +28,12 @@ public class Process {
 	
 	*/
 	public static void main(String[] args) {
+		int clusterNum = 1024;
+		if (args.length > 0)
+			clusterNum = Integer.parseInt(args[0]);
 		for(int i = 0;i<5;i++) {
-		HashMap<Integer, Integer> results = GraphPartition.Partition(1024, i);
-		GraphPartition.freshClusters(results, i, 1024);
+		HashMap<Integer, Integer> results = GraphPartition.Partition4(clusterNum, i);
+		GraphPartition.freshClusters(results, i, clusterNum);
 		}
 	}
 }
