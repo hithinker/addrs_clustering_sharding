@@ -311,6 +311,7 @@ public class GraphPartition {
 	public static void saveIdCidMap(HashMap<Integer,Integer> idCidPairs) {
 		HashMap<Integer,Integer> idCidStat = new HashMap<Integer,Integer>();
 		File idCidFilePath = new File("/home/infosec/sharding_expt/idCid0.txt");
+		System.out.println("write to file /home/infosec/sharding_expt/idCid0.txt");
 		BufferedWriter bw = null;
 		try {
 			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(idCidFilePath)));

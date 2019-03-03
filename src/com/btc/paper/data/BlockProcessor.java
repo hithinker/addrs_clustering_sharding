@@ -92,6 +92,7 @@ public class BlockProcessor {
 								tx_ids.add(addr_id.get(addr));
 								if(round > 0) {
 									if(id_cid.containsKey(addr_id.get(addr))) {
+									targetedIds.add(addr_id.get(addr));
 									String utxo = prev_out.getString("tx_index") + " " + addr + prev_out.getString("value")
 										+ prev_out.getString("script");
 									int rcid = this.getRandShards(utxo, 10);
