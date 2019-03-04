@@ -197,20 +197,22 @@ public class BlockProcessor {
 					float weight = Float.parseFloat(nodeWeight[2]);
 					if (edge_weight.containsKey(node1) && edge_weight.get(node1).containsKey(node2)) {
 						weight = (float) Math.pow(Math.pow(weight, 0.75) + edge_weight.get(node1).get(node2), 0.75);
-						// 去除条件>1 if(weight > 1)
-						if (epochGraph.containsKey(node1))
-							epochGraph.get(node1).put(node2, weight);
+						if (weight > 1)
+							if (epochGraph.containsKey(node1))
+								epochGraph.get(node1).put(node2, weight);
+							else {
+								HashMap<Integer, Float> singleNodeMap = new HashMap<Integer, Float>();
+								singleNodeMap.put(node2, weight);
+								epochGraph.put(node1, singleNodeMap);
+							}
+						else if (remainingEdges.containsKey(node1))
+							edge_weight.get(node1).put(node2, weight);
 						else {
 							HashMap<Integer, Float> singleNodeMap = new HashMap<Integer, Float>();
 							singleNodeMap.put(node2, weight);
-							epochGraph.put(node1, singleNodeMap);
+							remainingEdges.put(node1, singleNodeMap);
 						}
-						/*
-						 * 不考虑条件>1 else if(remainingEdges.containsKey(node1))
-						 * edge_weight.get(node1).put(node2, weight); else { HashMap<Integer,Float>
-						 * singleNodeMap = new HashMap<Integer,Float>(); singleNodeMap.put(node2,
-						 * weight); remainingEdges.put(node1,singleNodeMap); }
-						 */
+
 						edge_weight.get(node1).remove(node2);
 					} else {
 						float weightt = (float) (weight * 0.75);
@@ -251,14 +253,14 @@ public class BlockProcessor {
 						float weight = adjList.get(adjNode);
 						String line = node + " " + adjNode + " " + weight + "\n";
 						ebw.write(line);
-						// 不考虑条件>1 if(weight > 1)
-						if (epochGraph.containsKey(node))
-							epochGraph.get(node).put(adjNode, weight);
-						else {
-							HashMap<Integer, Float> newMap = new HashMap<Integer, Float>();
-							newMap.put(adjNode, weight);
-							epochGraph.put(node, newMap);
-						}
+						if (weight > 1)
+							if (epochGraph.containsKey(node))
+								epochGraph.get(node).put(adjNode, weight);
+							else {
+								HashMap<Integer, Float> newMap = new HashMap<Integer, Float>();
+								newMap.put(adjNode, weight);
+								epochGraph.put(node, newMap);
+							}
 					}
 				}
 			} catch (FileNotFoundException e) {
@@ -290,14 +292,14 @@ public class BlockProcessor {
 				HashMap<Integer, Float> adjList = edge_weight.get(node);
 				for (int adjNode : adjList.keySet()) {
 					float weight = adjList.get(adjNode);
-					// 不考虑条件>1 if(weight > 1)
-					if (epochGraph.containsKey(node)) {
-						epochGraph.get(node).put(adjNode, weight);
-					} else {
-						HashMap<Integer, Float> newMap = new HashMap<Integer, Float>();
-						newMap.put(adjNode, weight);
-						epochGraph.put(node, newMap);
-					}
+					if (weight > 1)
+						if (epochGraph.containsKey(node)) {
+							epochGraph.get(node).put(adjNode, weight);
+						} else {
+							HashMap<Integer, Float> newMap = new HashMap<Integer, Float>();
+							newMap.put(adjNode, weight);
+							epochGraph.put(node, newMap);
+						}
 				}
 			}
 			this.saveInitialEdges(edge_weight);
@@ -347,6 +349,8 @@ public class BlockProcessor {
 		FileInputStream fis = null;
 		BufferedReader br = null;
 		try {
+			File idCidFile = new File(idCidPath);
+			System.out.println(idCidFile.lastModified());
 			fis= new FileInputStream(idCidPath);
 			br = new BufferedReader(new InputStreamReader(fis));
 			String line = null;
