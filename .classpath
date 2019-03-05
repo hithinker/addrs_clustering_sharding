@@ -3,6 +3,6 @@
 	<classpathentry excluding="DBUtil/|addrs_clustering_sharding/" kind="src" path="src"/>
 	<classpathentry excluding="src/DBUtil/|src/data/|src/addrs_clustering_sharding/|src/" kind="src" path=""/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="D:/sx/书/论文/分片/fastjson-1.2.49.jar"/>
+	<classpathentry kind="lib" path="F:/JavaLibs/fastjson-1.2.49.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
