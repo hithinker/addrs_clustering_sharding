@@ -885,25 +885,26 @@ public static HashMap<Integer, Integer> Partition5(int clusterNum,int round) {
 		try {
 			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(idCidFilePath)));
 			if (!idCidFilePath.exists())
-				idCidFilePath.createNewFile();
-			for (int id : idCidPairs.keySet()) {
-				int cId = idCidPairs.get(id);
-				String idCidStr = id + " " + cId + "\n";
-				if (!idCidStat.containsKey(cId))
-					idCidStat.put(cId, 1);
-				else
-					idCidStat.put(cId, idCidStat.get(cId) + 1);
-				bw.write(idCidStr);
-			}
-			for (int cid : idCidStat.keySet()) {
-				System.out.println(cid + ":" + idCidStat.get(cid));
-			}
-		} catch (FileNotFoundException e) {
+				idCidFilePath.createNewFile();			
+            for(int id:idCidPairs.keySet()) {
+            	int cId = idCidPairs.get(id);
+            	String idCidStr = id + " " + cId + "\n";
+            	if(!idCidStat.containsKey(cId))
+            		idCidStat.put(cId, 1);
+            	else
+            		idCidStat.put(cId, idCidStat.get(cId) + 1);
+            	bw.write(idCidStr);
+		    }
+            for(int cid:idCidStat.keySet()) {
+            	System.out.println(cid + ":" + idCidStat.get(cid));
+            }            
+		}catch(FileNotFoundException e) {
 			e.getStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} finally {			
+		} 
+		catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+		}finally {			
 			if(bw != null)
 				try {
 					bw.flush();
