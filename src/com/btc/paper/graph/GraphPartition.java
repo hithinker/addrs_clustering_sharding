@@ -903,8 +903,8 @@ public static HashMap<Integer, Integer> Partition5(int clusterNum,int round) {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} finally {
-			if (bw != null)
+		} finally {			
+			if(bw != null)
 				try {
 					bw.flush();
 					bw.close();
