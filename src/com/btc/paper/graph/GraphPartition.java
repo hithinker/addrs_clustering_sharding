@@ -2,6 +2,7 @@
 package com.btc.paper.graph;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -523,7 +524,8 @@ public static HashMap<Integer, Integer> Partition4(int clusterNum,int round) {
 		double innerWeight = 0;
 		double partitionWeight = 0;
 		
-		while ((innerWeight < partitionWeight || (cluster.size() < nodes.size() / (clusterNum - i + 1))) && edges.isEmpty() == false) {
+		while (((innerWeight < partitionWeight && partitionWeight > 10000) || 
+				(cluster.size() < nodes.size() / (clusterNum - i + 1))) && edges.isEmpty() == false) {
 			// choose the max weight edge
 			int startNode = 0;
 			double startWeight = 0;
@@ -560,7 +562,8 @@ public static HashMap<Integer, Integer> Partition4(int clusterNum,int round) {
 			
 			// cluster grows, note that the partition can end before weight reach the set value
 			// if there is no more node connected to the cluster.
-			while (weightToCluster.isEmpty() == false && (innerWeight < partitionWeight || (cluster.size() < nodes.size() / (clusterNum - i + 1)))) {
+			while (weightToCluster.isEmpty() == false && ((innerWeight < partitionWeight && partitionWeight > 10000) ||
+					(cluster.size() < nodes.size() / (clusterNum - i + 1)))) {
 				int newNode = 0;
 				float newNodeWeightToCluster = 0;
 				//float weightProportion = 0;
@@ -643,6 +646,78 @@ public static HashMap<Integer, Integer> Partition4(int clusterNum,int round) {
 	System.out.println("graph Partition costs:" + (end - start));
 	return output;
 }
+
+public static HashMap<Integer, Integer> Partition5(int clusterNum,int round) {
+	
+	HashMap<Integer, Integer> output = new HashMap<Integer, Integer>();
+	
+	// first extract all edges/nodes from the graph to form connect table and compute weightSum.
+	long gStart = System.currentTimeMillis();
+	generateStructures(round);
+	long gEnd = System.currentTimeMillis();
+	System.out.println("generate structures cost " + (gEnd - gStart) + "ms.");
+	int nodeNum = nodes.size();
+	System.out.println("new partition start with " + nodeNum + " nodes, " + edges.size() + " edges, and weightSum " + weightSum);
+	
+	ArrayList<HashMap<Integer, Float>> remainsWeightToCluster = new ArrayList<HashMap<Integer, Float>>();
+	
+	long start = System.currentTimeMillis();
+	// begin of the cluster partition
+	for (int i = 0; i < clusterNum; ++i) {
+		long cStart = System.currentTimeMillis();
+		HashSet<Integer> cluster = new HashSet<Integer>();
+		HashMap<Integer, Float> weightToCluster = new HashMap<Integer, Float>();
+		double innerWeight = 0;
+		double partitionWeight = 0;
+		
+		for (int node : nodes) {
+			if (cluster.size() >= nodes.size() / (clusterNum - i + 1))
+				break;
+			cluster.add(node);
+			ArrayList<Integer> connections = connect_table.get(node);
+			ArrayList<Float> weights = weight_table.get(node);
+			for (int j = 0; j < connections.size(); j++) {
+				int another = connections.get(j);
+				float weight = weights.get(j);
+				if (cluster.contains(another) == false) {
+					partitionWeight += weight;
+				}
+				else {
+					partitionWeight -= weight;
+					innerWeight += weight;
+				}
+			}
+		}
+		nodes.removeAll(cluster);
+		remainsWeightToCluster.add(weightToCluster);
+		//result.add(cluster);
+		for (int node : cluster) {
+			output.put(node, i);
+		}
+		long cEnd = System.currentTimeMillis();
+		System.out.println(i + "th partition costs:" + (cEnd - cStart) + "ms.");
+		System.out.println("cluster " + i + " with " + cluster.size() + " nodes, partitionW:" + partitionWeight + ", innerW:" + innerWeight);
+	}
+	
+	// the remaining nodes is allocated to a cluster with biggest weight
+	for (int node : nodes) {
+		int choice = node % clusterNum;
+		float weight = 0;
+		for (int i = 0; i < clusterNum; ++i) {
+			if (remainsWeightToCluster.get(i).containsKey(node) && remainsWeightToCluster.get(i).get(node) > weight) {
+				weight = remainsWeightToCluster.get(i).get(node);
+				choice = i;
+			}
+		}
+		//HashSet<Integer> newCluster = result.get(choice);
+		//newCluster.add(node);
+		//result.set(choice, newCluster);
+		output.put(node, choice);
+	}
+	long end = System.currentTimeMillis();
+	System.out.println("graph Partition costs:" + (end - start));
+	return output;
+}
 	
 	// generate edges, nodes and compute the weight sum of all edges in the same time
 	private static void generateStructures(int round) {
@@ -683,6 +758,38 @@ public static HashMap<Integer, Integer> Partition4(int clusterNum,int round) {
 			weight_table.put(thisEnd, weights);
 		}
 	}
+	
+	public static void degreeStatistics(int round) {
+		System.out.println("node degree statistics for round " + round + ":");
+		long t1 = System.currentTimeMillis();
+		Graph graph = new Graph();
+		graph.createGraph(round);
+		HashMap<Integer,ArrayList<Float>> pair_table = graph.getEdgesInfos();
+		long t2 = System.currentTimeMillis();
+		System.out.println("generate graph stage:" + (t2 - t1) + "ms.");
+		nodeWeightSum = new HashMap<Integer, Float>();
+		weightSum = 0;
+		for (Map.Entry<Integer, ArrayList<Float>> entry : pair_table.entrySet()) {
+			int thisEnd = entry.getKey();
+			float thisWeightSum = 0;
+			ArrayList<Float> pairs = entry.getValue();
+			for (int i = 0; i < pairs.size(); i += 2) {
+				float weight = pairs.get(i + 1);
+				thisWeightSum += weight;
+			}
+			nodeWeightSum.put(thisEnd, thisWeightSum);
+		}
+		ArrayList<Map.Entry<Integer, Float>> list = new ArrayList<Map.Entry<Integer, Float>>(nodeWeightSum.entrySet());
+		list.sort(new Comparator<Map.Entry<Integer, Float>>() {
+	          public int compare(Map.Entry<Integer, Float> o1, Map.Entry<Integer, Float> o2) {
+	              return o2.getValue().compareTo(o1.getValue());
+	          }
+	      });
+		for (Map.Entry<Integer, Float> pair : list) {
+			System.out.println("node " + pair.getKey() + " is of degree " + pair.getValue());
+		}
+	}
+	
 	public static void freshClusters(HashMap<Integer,Integer> clusters,int round,int clusterNum) {
 		if(round == 0) {
 			saveIdCidMap(clusters);

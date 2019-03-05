@@ -359,7 +359,7 @@ public class BlockProcessor {
 					break;
 				String[] pair = line.trim().split(" ");
 				int id = Integer.parseInt(pair[0]);
-				int cid = Integer.parseInt(pair[0]);
+				int cid = Integer.parseInt(pair[1]);
 				id_cid.put(id,cid);
 			}
 		} catch (FileNotFoundException e) {
