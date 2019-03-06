@@ -14,7 +14,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 
 public class BlockProcessor {
-	public HashMap<Integer, HashMap<Integer, Float>> readBlock(String dir, int round) {
+	public HashMap<Integer, ArrayList<Float>> readBlock(String dir, int round) {
 		File blockDir = new File(dir);
 		StringBuilder sb = new StringBuilder();
 		JSONObject block_json_obj = null;
@@ -133,9 +133,10 @@ public class BlockProcessor {
 				}
 			}
 		}
-		System.out.println("This round 参与交易总数为:" + txsCount);
-		System.out.println("This round 参与交易的新地址数为:" + epochAddrCount);
-		System.out.println("This round 参与交易的旧地址数为:" + targetedIds.size());
+		System.out.println("round" + round + "参与交易总数为:" + txsCount);
+		System.out.println("round" + round + "参与交易的新地址(本轮中被分配地址)数为:" + epochAddrCount);
+		System.out.println("round" + round + "参与交易的旧地址数为:" + targetedIds.size());
+		System.out.println("截至 round" + round + "总的地指数为:" + addr_id.size());
 		// 将addr-id映射关系持久化
 		this.saveAddrIdMap(addr_id, "/home/infosec/sharding_expt/addrid.txt");
 		addr_id.clear();
@@ -173,10 +174,19 @@ public class BlockProcessor {
 		int edgeCount = 0;
 		for (int endPoint : edge_weight.keySet())
 			edgeCount += (edge_weight.get(endPoint).size());
-		System.out.println(edgeCount);
-		HashMap<Integer, HashMap<Integer, Float>> epochGraph = new HashMap<Integer, HashMap<Integer, Float>>();
-		// 更新历史图
+		System.out.println("round" + round + "共有边数" + edgeCount);
+		HashMap<Integer, ArrayList<Float>> epochGraph = new HashMap<Integer, ArrayList<Float>>();		
 		if (round > 0) {
+			//以下为计算跨片结果
+			for (int i = 0; i < beforeClusteredShardStat.size(); i++) {
+				randShardingCount += beforeClusteredShardStat.get(i);
+			}
+			for (int i = 0; i < afterClusteredShardStat.size(); i++) {
+				clusteredShardingCount += afterClusteredShardStat.get(i);
+			}
+			System.out.println("round" + round + "在未地址聚类前的跨片数为:" + randShardingCount);
+			System.out.println("round" + round + "地址聚类后的跨片数为:" + clusteredShardingCount);
+			//更新历史图
 			BufferedReader ebr = null;
 			BufferedWriter ebw = null;
 			try {
@@ -187,24 +197,40 @@ public class BlockProcessor {
 				HashMap<Integer, HashMap<Integer, Float>> remainingEdges = new HashMap<Integer, HashMap<Integer, Float>>();
 				String edgeInfo = null;
 				int edgeCounter = 0;
+				int historyGraphEdgeCounter=0;
 				while ((edgeInfo = ebr.readLine()) != null) {
 					if (edgeInfo.trim().length() < 1)
 						break;
 					edgeCounter++;
+					historyGraphEdgeCounter++;
 					String[] nodeWeight = edgeInfo.trim().split(" ");
 					int node1 = Integer.parseInt(nodeWeight[0]);
 					int node2 = Integer.parseInt(nodeWeight[1]);
 					float weight = Float.parseFloat(nodeWeight[2]);
 					if (edge_weight.containsKey(node1) && edge_weight.get(node1).containsKey(node2)) {
 						weight = (float) Math.pow(Math.pow(weight, 0.75) + edge_weight.get(node1).get(node2), 0.75);
-						if (weight > 1)
-							if (epochGraph.containsKey(node1))
-								epochGraph.get(node1).put(node2, weight);
-							else {
-								HashMap<Integer, Float> singleNodeMap = new HashMap<Integer, Float>();
-								singleNodeMap.put(node2, weight);
-								epochGraph.put(node1, singleNodeMap);
+						// 删除条件>1 if (weight > 1)
+							if (epochGraph.containsKey(node1)) {
+								epochGraph.get(node1).add((float) node2);
+								epochGraph.get(node1).add(weight);
 							}
+							else {
+								ArrayList<Float> singleNodeAdjList = new ArrayList<Float>();
+								singleNodeAdjList.add((float) node2);
+								singleNodeAdjList.add(weight);
+								epochGraph.put(node1, singleNodeAdjList);
+							}
+							if (epochGraph.containsKey(node2)) {
+								epochGraph.get(node2).add((float) node1);
+								epochGraph.get(node2).add(weight);
+							}
+							else {
+								ArrayList<Float> singleNodeAdjList = new ArrayList<Float>();
+								singleNodeAdjList.add((float) node1);
+								singleNodeAdjList.add(weight);
+								epochGraph.put(node2, singleNodeAdjList);
+							}
+							/*
 						else if (remainingEdges.containsKey(node1))
 							edge_weight.get(node1).put(node2, weight);
 						else {
@@ -212,7 +238,7 @@ public class BlockProcessor {
 							singleNodeMap.put(node2, weight);
 							remainingEdges.put(node1, singleNodeMap);
 						}
-
+                         */
 						edge_weight.get(node1).remove(node2);
 					} else {
 						float weightt = (float) (weight * 0.75);
@@ -227,9 +253,10 @@ public class BlockProcessor {
 					}
 					if (edgeCounter >= 10000000) {
 						for (int node : epochGraph.keySet()) {
-							HashMap<Integer, Float> singleNodeMap = epochGraph.get(node);
-							for (int anotherNode : singleNodeMap.keySet()) {
-								String new_line = node + " " + anotherNode + " " + singleNodeMap.get(anotherNode)
+							ArrayList<Float> adjList= epochGraph.get(node);
+							int i = 0;
+							while (i < adjList.size()) {
+								String new_line = node + " " + adjList.get(i++) + " " + adjList.get(i++)
 										+ "\n";
 								ebw.write(new_line);
 							}
@@ -253,16 +280,31 @@ public class BlockProcessor {
 						float weight = adjList.get(adjNode);
 						String line = node + " " + adjNode + " " + weight + "\n";
 						ebw.write(line);
-						if (weight > 1)
-							if (epochGraph.containsKey(node))
-								epochGraph.get(node).put(adjNode, weight);
-							else {
-								HashMap<Integer, Float> newMap = new HashMap<Integer, Float>();
-								newMap.put(adjNode, weight);
-								epochGraph.put(node, newMap);
-							}
+						historyGraphEdgeCounter++;
+						// 删除条件>1 if (weight > 1)
+						if (epochGraph.containsKey(node)) {
+							epochGraph.get(node).add((float) adjNode);
+							epochGraph.get(node).add(weight);
+						}
+						else {
+							ArrayList<Float> singleNodeAdjList = new ArrayList<Float>();
+							singleNodeAdjList.add((float) node);
+							singleNodeAdjList.add(weight);
+							epochGraph.put(node, singleNodeAdjList);
+						}
+						if (epochGraph.containsKey(adjNode)) {
+							epochGraph.get(adjNode).add((float) node);
+							epochGraph.get(adjNode).add(weight);
+						}
+						else {
+							ArrayList<Float> singleNodeAdjList = new ArrayList<Float>();
+							singleNodeAdjList.add((float) adjNode);
+							singleNodeAdjList.add(weight);
+							epochGraph.put(adjNode, singleNodeAdjList);
+						}
 					}
 				}
+				System.out.println("历史图总边数为:" + historyGraphEdgeCounter);
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
@@ -279,31 +321,37 @@ public class BlockProcessor {
 				}
 				;
 			}
-			for (int i = 0; i < beforeClusteredShardStat.size(); i++) {
-				randShardingCount += beforeClusteredShardStat.get(i);
-			}
-			for (int i = 0; i < afterClusteredShardStat.size(); i++) {
-				clusteredShardingCount += afterClusteredShardStat.get(i);
-			}
-			System.out.println("round" + round + "在未地址聚类前的跨片数为:" + randShardingCount);
-			System.out.println("round" + round + "地址聚类后的跨片数为:" + clusteredShardingCount);
+		
 		} else {
 			for (int node : edge_weight.keySet()) {
 				HashMap<Integer, Float> adjList = edge_weight.get(node);
 				for (int adjNode : adjList.keySet()) {
 					float weight = adjList.get(adjNode);
-					if (weight > 1)
-						if (epochGraph.containsKey(node)) {
-							epochGraph.get(node).put(adjNode, weight);
-						} else {
-							HashMap<Integer, Float> newMap = new HashMap<Integer, Float>();
-							newMap.put(adjNode, weight);
-							epochGraph.put(node, newMap);
-						}
+					// 删除条件>1 if (weight > 1)
+					if (epochGraph.containsKey(node)) {
+						epochGraph.get(node).add((float) adjNode);
+						epochGraph.get(node).add(weight);
+					}
+					else {
+						ArrayList<Float> singleNodeAdjList = new ArrayList<Float>();
+						singleNodeAdjList.add((float) node);
+						singleNodeAdjList.add(weight);
+						epochGraph.put(node, singleNodeAdjList);
+					}
+					if (epochGraph.containsKey(adjNode)) {
+						epochGraph.get(adjNode).add((float) node);
+						epochGraph.get(adjNode).add(weight);
+					}
+					else {
+						ArrayList<Float> singleNodeAdjList = new ArrayList<Float>();
+						singleNodeAdjList.add((float) adjNode);
+						singleNodeAdjList.add(weight);
+						epochGraph.put(adjNode, singleNodeAdjList);
+					}
 				}
 			}
 			this.saveInitialEdges(edge_weight);
-		}
+		}		
 		long end = System.currentTimeMillis();
 		System.out.println("round" + round + "读入数据共用时:(millsecond)" + (end - start));
 		return epochGraph;
