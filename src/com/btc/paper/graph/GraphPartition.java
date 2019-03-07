@@ -1162,7 +1162,7 @@ private static void generateStructures2(int round) {
 				}
 				else {
 					if(cId < 0 || cId > 1023)
-						System.out.println(cId);
+						System.out.println("1:"+cId);
 					remainingAddrIds.get(cId).add(aId);
 				}
 			}
@@ -1171,13 +1171,21 @@ private static void generateStructures2(int round) {
 				int maxValue = -1;
 				int maxCid = -1;
 				HashMap<Integer,Integer> oneOldClusterStat = old2NewStats.get(i);
-				for(int clusterId:oneOldClusterStat.keySet()) {
+				if(oneOldClusterStat.size()==0) {
+					System.out.println("size is 0");
+					break;
+				}
+				for(int clusterId:oneOldClusterStat.keySet()) {					
 					if(oneOldClusterStat.get(clusterId) > maxValue) {
 						maxCid = clusterId;
 						maxValue = oneOldClusterStat.get(clusterId);
 					}
 				}
-				ArrayList<Integer> ids = remainingAddrIds.get(i);				
+				ArrayList<Integer> ids = remainingAddrIds.get(i);
+				if(maxCid == -1) {
+					System.out.println("2:" + -1);
+					return;
+				}
 				for(int id:ids) {
 					String idCidPair = id + " " + maxCid + "\n";
 					bw.write(idCidPair);
