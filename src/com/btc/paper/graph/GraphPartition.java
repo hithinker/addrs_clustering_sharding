@@ -897,10 +897,6 @@ public static HashMap<Integer, Integer> Partition7(int clusterNum,int round) {
 			for (int j = 0; j < connections.size(); j++) {
 				int another = connections.get(j);
 				float weight = weights.get(j);
-				/*****????****/
-				if (another == startNode)
-					innerWeight += weight;
-				/************/
 				if (cluster.contains(another) == false) {
 					partitionWeight += weight;
 					if (nodes.contains(another)) {
@@ -936,10 +932,6 @@ public static HashMap<Integer, Integer> Partition7(int clusterNum,int round) {
 				for (int j = 0; j < connections.size(); j++) {
 					int another = connections.get(j);
 					float weight = weights.get(j);
-					/************????************/
-					if (another == newNode)
-						innerWeight += weight;
-					/***************************/
 					if (cluster.contains(another) == false) {
 						partitionWeight += weight;
 						if (nodes.contains(another)) {
