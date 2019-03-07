@@ -1167,7 +1167,11 @@ private static void generateStructures2(int round) {
 				int maxValue = -1;
 				int maxCid = -1;
 				HashMap<Integer,Integer> oneOldClusterStat = old2NewStats.get(i);
-				for(int clusterId:oneOldClusterStat.keySet()) {
+				if(oneOldClusterStat.size()==0) {
+					System.out.println("size is 0");
+					break;
+				}
+				for(int clusterId:oneOldClusterStat.keySet()) {					
 					if(oneOldClusterStat.get(clusterId) > maxValue) {
 						maxCid = clusterId;
 						maxValue = oneOldClusterStat.get(clusterId);
