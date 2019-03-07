@@ -207,7 +207,7 @@ public class BlockProcessor {
 					int node1 = Integer.parseInt(nodeWeight[0]);
 					int node2 = Integer.parseInt(nodeWeight[1]);
 					float weight = Float.parseFloat(nodeWeight[2]);
-					if (edge_weight.containsKey(node1) && edge_weight.get(node1).containsKey(node2)) {
+					if (edge_weight.containsKey(node1) && edge_weight.get(node1).containsKey(node2)) {						   
 						weight = (float) Math.pow(Math.pow(weight, 0.75) + edge_weight.get(node1).get(node2), 0.75);
 						// É¾³ýÌõ¼þ>1 if (weight > 1)
 							if (epochGraph.containsKey(node1)) {
@@ -334,7 +334,7 @@ public class BlockProcessor {
 					}
 					else {
 						ArrayList<Float> singleNodeAdjList = new ArrayList<Float>();
-						singleNodeAdjList.add((float) node);
+						singleNodeAdjList.add((float) adjNode);
 						singleNodeAdjList.add(weight);
 						epochGraph.put(node, singleNodeAdjList);
 					}
@@ -344,7 +344,7 @@ public class BlockProcessor {
 					}
 					else {
 						ArrayList<Float> singleNodeAdjList = new ArrayList<Float>();
-						singleNodeAdjList.add((float) adjNode);
+						singleNodeAdjList.add((float) node);
 						singleNodeAdjList.add(weight);
 						epochGraph.put(adjNode, singleNodeAdjList);
 					}
@@ -447,8 +447,7 @@ public class BlockProcessor {
 			e.printStackTrace();
 		} catch(IOException e) {
 			e.printStackTrace();
-		}finally {
-			
+		}finally {			
 				try {
 					if(bw != null)
 						bw.close();
