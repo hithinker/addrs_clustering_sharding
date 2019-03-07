@@ -288,7 +288,7 @@ public class BlockProcessor {
 						}
 						else {
 							ArrayList<Float> singleNodeAdjList = new ArrayList<Float>();
-							singleNodeAdjList.add((float) node);
+							singleNodeAdjList.add((float) adjNode);
 							singleNodeAdjList.add(weight);
 							epochGraph.put(node, singleNodeAdjList);
 						}
@@ -298,7 +298,7 @@ public class BlockProcessor {
 						}
 						else {
 							ArrayList<Float> singleNodeAdjList = new ArrayList<Float>();
-							singleNodeAdjList.add((float) adjNode);
+							singleNodeAdjList.add((float) node);
 							singleNodeAdjList.add(weight);
 							epochGraph.put(adjNode, singleNodeAdjList);
 						}
