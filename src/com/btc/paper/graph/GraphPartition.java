@@ -967,6 +967,14 @@ public static HashMap<Integer, Integer> Partition7(int clusterNum,int round) {
 	}
 	long end = System.currentTimeMillis();
 	System.out.println("graph Partition costs:" + (end - start));
+	
+	connect_table.clear();
+	weight_table.clear();
+	nodes.clear();
+	nodeWeightSum.clear();
+	degreeQueue.clear();
+	
+	
 	return output;
 }
 
