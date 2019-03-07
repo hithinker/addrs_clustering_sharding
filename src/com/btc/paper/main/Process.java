@@ -1,5 +1,3 @@
-<<<<<<< Updated upstream
-
 
 package com.btc.paper.main;
 
