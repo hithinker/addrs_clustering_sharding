@@ -1017,6 +1017,8 @@ private static void generateStructures2(int round) {
 	HashMap<Integer,ArrayList<Float>> pair_table = graph.getEdgesInfos();
 	long t2 = System.currentTimeMillis();
 	System.out.println("generate graph stage:" + (t2 - t1) + "ms.");
+	
+	long t3 = System.currentTimeMillis();
 	nodes = new HashSet<Integer>();
 	nodeWeightSum = new HashMap<Integer, Float>();
 	weightSum = 0;
@@ -1038,6 +1040,8 @@ private static void generateStructures2(int round) {
 		nodeWeightSum.put(thisEnd, thisWeightSum);
 		connect_table.put(thisEnd, connections);
 		weight_table.put(thisEnd, weights);
+		long t4 = System.currentTimeMillis();
+		System.out.println("generate structures cost " + (t4 - t3) + "ms");
 		//System.out.println("node " + thisEnd + " has degree " + thisWeightSum);
 	}
 }
