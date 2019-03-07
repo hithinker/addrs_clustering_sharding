@@ -256,7 +256,7 @@ public class BlockProcessor {
 							ArrayList<Float> adjList= epochGraph.get(node);
 							int i = 0;
 							while (i < adjList.size()) {
-								String new_line = node + " " + adjList.get(i++) + " " + adjList.get(i++)
+								String new_line = node + " " + (int)adjList.get(i++).floatValue() + " " + adjList.get(i++)
 										+ "\n";
 								ebw.write(new_line);
 							}
