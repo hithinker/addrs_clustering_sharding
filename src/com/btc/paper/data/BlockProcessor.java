@@ -175,9 +175,9 @@ public class BlockProcessor {
 		for (int endPoint : edge_weight.keySet())
 			edgeCount += (edge_weight.get(endPoint).size());
 		System.out.println("round" + round + "共有边数" + edgeCount);
-		HashMap<Integer, ArrayList<Float>> epochGraph = new HashMap<Integer, ArrayList<Float>>();		
+		HashMap<Integer, ArrayList<Float>> epochGraph = new HashMap<Integer, ArrayList<Float>>();
 		if (round > 0) {
-			//以下为计算跨片结果
+			// 以下为计算跨片结果
 			for (int i = 0; i < beforeClusteredShardStat.size(); i++) {
 				randShardingCount += beforeClusteredShardStat.get(i);
 			}
@@ -186,7 +186,7 @@ public class BlockProcessor {
 			}
 			System.out.println("round" + round + "在未地址聚类前的跨片数为:" + randShardingCount);
 			System.out.println("round" + round + "地址聚类后的跨片数为:" + clusteredShardingCount);
-			//更新历史图
+			// 更新历史图
 			BufferedReader ebr = null;
 			BufferedWriter ebw = null;
 			try {
@@ -197,7 +197,7 @@ public class BlockProcessor {
 				HashMap<Integer, HashMap<Integer, Float>> remainingEdges = new HashMap<Integer, HashMap<Integer, Float>>();
 				String edgeInfo = null;
 				int edgeCounter = 0;
-				int historyGraphEdgeCounter=0;
+				int historyGraphEdgeCounter = 0;
 				while ((edgeInfo = ebr.readLine()) != null) {
 					if (edgeInfo.trim().length() < 1)
 						break;
@@ -207,38 +207,33 @@ public class BlockProcessor {
 					int node1 = Integer.parseInt(nodeWeight[0]);
 					int node2 = Integer.parseInt(nodeWeight[1]);
 					float weight = Float.parseFloat(nodeWeight[2]);
-					if (edge_weight.containsKey(node1) && edge_weight.get(node1).containsKey(node2)) {						   
+					if (edge_weight.containsKey(node1) && edge_weight.get(node1).containsKey(node2)) {
 						weight = (float) Math.pow(Math.pow(weight, 0.75) + edge_weight.get(node1).get(node2), 0.75);
 						// 删除条件>1 if (weight > 1)
-							if (epochGraph.containsKey(node1)) {
-								epochGraph.get(node1).add((float) node2);
-								epochGraph.get(node1).add(weight);
-							}
-							else {
-								ArrayList<Float> singleNodeAdjList = new ArrayList<Float>();
-								singleNodeAdjList.add((float) node2);
-								singleNodeAdjList.add(weight);
-								epochGraph.put(node1, singleNodeAdjList);
-							}
-							if (epochGraph.containsKey(node2)) {
-								epochGraph.get(node2).add((float) node1);
-								epochGraph.get(node2).add(weight);
-							}
-							else {
-								ArrayList<Float> singleNodeAdjList = new ArrayList<Float>();
-								singleNodeAdjList.add((float) node1);
-								singleNodeAdjList.add(weight);
-								epochGraph.put(node2, singleNodeAdjList);
-							}
-							/*
-						else if (remainingEdges.containsKey(node1))
-							edge_weight.get(node1).put(node2, weight);
-						else {
-							HashMap<Integer, Float> singleNodeMap = new HashMap<Integer, Float>();
-							singleNodeMap.put(node2, weight);
-							remainingEdges.put(node1, singleNodeMap);
+						if (epochGraph.containsKey(node1)) {
+							epochGraph.get(node1).add((float) node2);
+							epochGraph.get(node1).add(weight);
+						} else {
+							ArrayList<Float> singleNodeAdjList = new ArrayList<Float>();
+							singleNodeAdjList.add((float) node2);
+							singleNodeAdjList.add(weight);
+							epochGraph.put(node1, singleNodeAdjList);
 						}
-                         */
+						if (epochGraph.containsKey(node2)) {
+							epochGraph.get(node2).add((float) node1);
+							epochGraph.get(node2).add(weight);
+						} else {
+							ArrayList<Float> singleNodeAdjList = new ArrayList<Float>();
+							singleNodeAdjList.add((float) node1);
+							singleNodeAdjList.add(weight);
+							epochGraph.put(node2, singleNodeAdjList);
+						}
+						/*
+						 * else if (remainingEdges.containsKey(node1)) edge_weight.get(node1).put(node2,
+						 * weight); else { HashMap<Integer, Float> singleNodeMap = new HashMap<Integer,
+						 * Float>(); singleNodeMap.put(node2, weight); remainingEdges.put(node1,
+						 * singleNodeMap); }
+						 */
 						edge_weight.get(node1).remove(node2);
 					} else {
 						float weightt = (float) (weight * 0.75);
@@ -253,11 +248,11 @@ public class BlockProcessor {
 					}
 					if (edgeCounter >= 10000000) {
 						for (int node : epochGraph.keySet()) {
-							ArrayList<Float> adjList= epochGraph.get(node);
+							ArrayList<Float> adjList = epochGraph.get(node);
 							int i = 0;
 							while (i < adjList.size()) {
-								String new_line = node + " " + (int)adjList.get(i++).floatValue() + " " + adjList.get(i++)
-										+ "\n";
+								String new_line = node + " " + (int) adjList.get(i++).floatValue() + " "
+										+ adjList.get(i++) + "\n";
 								ebw.write(new_line);
 							}
 						}
@@ -285,8 +280,7 @@ public class BlockProcessor {
 						if (epochGraph.containsKey(node)) {
 							epochGraph.get(node).add((float) adjNode);
 							epochGraph.get(node).add(weight);
-						}
-						else {
+						} else {
 							ArrayList<Float> singleNodeAdjList = new ArrayList<Float>();
 							singleNodeAdjList.add((float) adjNode);
 							singleNodeAdjList.add(weight);
@@ -295,8 +289,7 @@ public class BlockProcessor {
 						if (epochGraph.containsKey(adjNode)) {
 							epochGraph.get(adjNode).add((float) node);
 							epochGraph.get(adjNode).add(weight);
-						}
-						else {
+						} else {
 							ArrayList<Float> singleNodeAdjList = new ArrayList<Float>();
 							singleNodeAdjList.add((float) node);
 							singleNodeAdjList.add(weight);
@@ -321,7 +314,7 @@ public class BlockProcessor {
 				}
 				;
 			}
-		
+
 		} else {
 			for (int node : edge_weight.keySet()) {
 				HashMap<Integer, Float> adjList = edge_weight.get(node);
@@ -331,8 +324,7 @@ public class BlockProcessor {
 					if (epochGraph.containsKey(node)) {
 						epochGraph.get(node).add((float) adjNode);
 						epochGraph.get(node).add(weight);
-					}
-					else {
+					} else {
 						ArrayList<Float> singleNodeAdjList = new ArrayList<Float>();
 						singleNodeAdjList.add((float) adjNode);
 						singleNodeAdjList.add(weight);
@@ -341,8 +333,7 @@ public class BlockProcessor {
 					if (epochGraph.containsKey(adjNode)) {
 						epochGraph.get(adjNode).add((float) node);
 						epochGraph.get(adjNode).add(weight);
-					}
-					else {
+					} else {
 						ArrayList<Float> singleNodeAdjList = new ArrayList<Float>();
 						singleNodeAdjList.add((float) node);
 						singleNodeAdjList.add(weight);
@@ -351,7 +342,7 @@ public class BlockProcessor {
 				}
 			}
 			this.saveInitialEdges(edge_weight);
-		}		
+		}
 		long end = System.currentTimeMillis();
 		System.out.println("round" + round + "读入数据共用时:(millsecond)" + (end - start));
 		return epochGraph;
