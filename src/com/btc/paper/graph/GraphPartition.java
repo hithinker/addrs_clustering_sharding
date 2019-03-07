@@ -1040,10 +1040,10 @@ private static void generateStructures2(int round) {
 		nodeWeightSum.put(thisEnd, thisWeightSum);
 		connect_table.put(thisEnd, connections);
 		weight_table.put(thisEnd, weights);
-		long t4 = System.currentTimeMillis();
-		System.out.println("generate structures cost " + (t4 - t3) + "ms");
 		//System.out.println("node " + thisEnd + " has degree " + thisWeightSum);
 	}
+	long t4 = System.currentTimeMillis();
+	System.out.println("generate structures cost " + (t4 - t3) + "ms");
 }
 	
 	// generate edges, nodes and compute the weight sum of all edges in the same time
