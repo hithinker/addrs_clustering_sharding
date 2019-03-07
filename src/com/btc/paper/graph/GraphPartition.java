@@ -27,16 +27,16 @@ class NodeDegree implements Comparable<NodeDegree> {
 	}
 	@Override
     public int compareTo(NodeDegree o) {
-        if(weight < o.weight){
+        if(weight > o.weight){
             return -1;
         }
-        if(weight > o.weight){
+        if(weight < o.weight){
             return 1;
         }
-        if(id < o.id){
+        if(id > o.id){
         	return -1;
         }
-        if(id > o.id){
+        if(id < o.id){
         	return 1;
         }
         return 0;
@@ -534,11 +534,11 @@ public static HashMap<Integer, Integer> Partition4(int clusterNum,int round) {
 	
 	// first extract all edges/nodes from the graph to form connect table and compute weightSum.
 	long gStart = System.currentTimeMillis();
-	generateStructures(round);
+	generateStructures2(round);
 	long gEnd = System.currentTimeMillis();
 	System.out.println("generate structures cost " + (gEnd - gStart) + "ms.");
 	int nodeNum = nodes.size();
-	System.out.println("new partition start with " + nodeNum + " nodes, " + edges.size() + " edges, and weightSum " + weightSum);
+	System.out.println("new partition start with " + nodeNum + " nodes");// + edges.size() + " edges, and weightSum " + weightSum);
 	
 	ArrayList<HashMap<Integer, Float>> remainsWeightToCluster = new ArrayList<HashMap<Integer, Float>>();
 	
@@ -552,7 +552,7 @@ public static HashMap<Integer, Integer> Partition4(int clusterNum,int round) {
 		double partitionWeight = 0;
 		
 		while (((innerWeight < partitionWeight && partitionWeight > 10000) || 
-				(cluster.size() < nodes.size() / (clusterNum - i + 1))) && edges.isEmpty() == false) {
+				(cluster.size() < nodes.size() / (clusterNum - i + 1)))) {
 			// choose the max weight edge
 			int startNode = 0;
 			double startWeight = 0;
@@ -576,9 +576,6 @@ public static HashMap<Integer, Integer> Partition4(int clusterNum,int round) {
 				if (cluster.contains(another) == false) {
 					partitionWeight += weight;
 					if (nodes.contains(another)) {
-						long edgeIndex = (((long)(Math.min(startNode, another))) << 32)
-								+ ((long)(Math.max(startNode, another)));
-						edges.remove(edgeIndex);
 						if (weightToCluster.containsKey(another))
 							weightToCluster.put(another, weightToCluster.get(another) + weight);
 						else
@@ -613,9 +610,6 @@ public static HashMap<Integer, Integer> Partition4(int clusterNum,int round) {
 					if (cluster.contains(another) == false) {
 						partitionWeight += weight;
 						if (nodes.contains(another)) {
-							long edgeIndex = (((long)(Math.min(newNode, another))) << 32)
-									+ ((long)(Math.max(newNode, another)));
-							edges.remove(edgeIndex);
 							if (weightToCluster.containsKey(another))
 								weightToCluster.put(another, weightToCluster.get(another) + weight);
 							else
@@ -626,23 +620,6 @@ public static HashMap<Integer, Integer> Partition4(int clusterNum,int round) {
 				innerWeight += newNodeWeightToCluster;
 				partitionWeight -= newNodeWeightToCluster;
 			}
-		}
-		if (edges.isEmpty() == true) {
-			for (int node : nodes) {
-				if (cluster.size() >= nodes.size() / (clusterNum - i + 1))
-					break;
-				cluster.add(node);
-				ArrayList<Integer> connections = connect_table.get(node);
-				ArrayList<Float> weights = weight_table.get(node);
-				for (int j = 0; j < connections.size(); j++) {
-					int another = connections.get(j);
-					float weight = weights.get(j);
-					if (cluster.contains(another) == false) {
-						partitionWeight += weight;
-					}
-				}
-			}
-			nodes.removeAll(cluster);
 		}
 		remainsWeightToCluster.add(weightToCluster);
 		//result.add(cluster);
@@ -850,7 +827,7 @@ public static HashMap<Integer, Integer> Partition6(int clusterNum,int round) {
 		System.out.println(i + "th partition costs:" + (cEnd - cStart) + "ms.");
 		System.out.println("cluster " + i + " with " + cluster.size() + " nodes, partitionW:" + partitionWeight +
 				", innerW:" + innerWeight + ", Diff:" + (innerWeight - partitionWeight) + " scaled link density:" 
-				+ (innerEdges * 2) / (cluster.size() - 1));
+				+ (float)(innerEdges * 2) / (cluster.size() - 1));
 	}
 	
 	// the remaining nodes is allocated to a cluster with biggest weight
