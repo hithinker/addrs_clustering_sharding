@@ -195,6 +195,7 @@ public class BlockProcessor {
 				ebr = new BufferedReader(new InputStreamReader(new FileInputStream(preEdgeFile)));
 				ebw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(newEdgeFile)));
 				HashMap<Integer, HashMap<Integer, Float>> remainingEdges = new HashMap<Integer, HashMap<Integer, Float>>();
+				HashMap<Integer, ArrayList<Float>> tmpGraph = new HashMap<Integer, ArrayList<Float>>();
 				String edgeInfo = null;
 				int edgeCounter = 0;
 				int historyGraphEdgeCounter = 0;
@@ -207,26 +208,27 @@ public class BlockProcessor {
 					int node1 = Integer.parseInt(nodeWeight[0]);
 					int node2 = Integer.parseInt(nodeWeight[1]);
 					float weight = Float.parseFloat(nodeWeight[2]);
+					//ÐÞ¸Ä1
 					if (edge_weight.containsKey(node1) && edge_weight.get(node1).containsKey(node2)) {
 						weight = (float) Math.pow(Math.pow(weight, 0.75) + edge_weight.get(node1).get(node2), 0.75);
 						// É¾³ýÌõ¼þ>1 if (weight > 1)
-						if (epochGraph.containsKey(node1)) {
-							epochGraph.get(node1).add((float) node2);
-							epochGraph.get(node1).add(weight);
+						if (tmpGraph.containsKey(node1)) {
+							tmpGraph.get(node1).add((float) node2);
+							tmpGraph.get(node1).add(weight);
 						} else {
 							ArrayList<Float> singleNodeAdjList = new ArrayList<Float>();
 							singleNodeAdjList.add((float) node2);
 							singleNodeAdjList.add(weight);
-							epochGraph.put(node1, singleNodeAdjList);
+							tmpGraph.put(node1, singleNodeAdjList);
 						}
-						if (epochGraph.containsKey(node2)) {
-							epochGraph.get(node2).add((float) node1);
-							epochGraph.get(node2).add(weight);
+						if (tmpGraph.containsKey(node2)) {
+							tmpGraph.get(node2).add((float) node1);
+							tmpGraph.get(node2).add(weight);
 						} else {
 							ArrayList<Float> singleNodeAdjList = new ArrayList<Float>();
 							singleNodeAdjList.add((float) node1);
 							singleNodeAdjList.add(weight);
-							epochGraph.put(node2, singleNodeAdjList);
+							tmpGraph.put(node2, singleNodeAdjList);
 						}
 						/*
 						 * else if (remainingEdges.containsKey(node1)) edge_weight.get(node1).put(node2,
@@ -247,8 +249,8 @@ public class BlockProcessor {
 							}
 					}
 					if (edgeCounter >= 10000000) {
-						for (int node : epochGraph.keySet()) {
-							ArrayList<Float> adjList = epochGraph.get(node);
+						for (int node : tmpGraph.keySet()) {
+							ArrayList<Float> adjList = tmpGraph.get(node);
 							int i = 0;
 							while (i < adjList.size()) {
 								String new_line = node + " " + (int) adjList.get(i++).floatValue() + " "
@@ -265,6 +267,9 @@ public class BlockProcessor {
 							}
 						}
 						remainingEdges.clear();
+						tmpGraph.forEach(
+				        		  (key, value) -> epochGraph.merge(key, value, (v1, v2) -> {v1.addAll(v2);return v1;}));
+						tmpGraph.clear();
 						edgeCounter = 0;
 					}
 				}
@@ -388,8 +393,6 @@ public class BlockProcessor {
 		FileInputStream fis = null;
 		BufferedReader br = null;
 		try {
-			File idCidFile = new File(idCidPath);
-			System.out.println(idCidFile.lastModified());
 			fis= new FileInputStream(idCidPath);
 			br = new BufferedReader(new InputStreamReader(fis));
 			String line = null;

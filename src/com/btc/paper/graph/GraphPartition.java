@@ -1141,6 +1141,7 @@ private static void generateStructures2(int round) {
 				remainingAddrIds.add(new ArrayList<Integer>());
 			}
 			String idCidLine = null;
+			long start = System.currentTimeMillis();
 			while ((idCidLine = br.readLine()) != null) {
 				if (idCidLine.trim().length() < 1)
 					break;
@@ -1153,23 +1154,20 @@ private static void generateStructures2(int round) {
 						singleOldClusterStat.put(newCid, singleOldClusterStat.get(newCid) + 1);
 					else
 						singleOldClusterStat.put(newCid, 1);
-					String idCidPair = aId + " " + clusters.get(aId) + "\n";
-					bw.write(idCidPair);
 				} else {
 					if (cId < 0 || cId > 1023)
 						System.out.println("1:" + cId);
 					remainingAddrIds.get(cId).add(aId);
 				}
 			}
+			long end = System.currentTimeMillis();
+			System.out.println("freshClusters read costs:" + (end - start));
 			oldIdCidFile.delete();
+			long start1 = System.currentTimeMillis();
 			for (int i = 0; i < old2NewStats.size(); i++) {
 				int maxValue = -1;
 				int maxCid = -1;
 				HashMap<Integer, Integer> oneOldClusterStat = old2NewStats.get(i);
-				if (oneOldClusterStat.size() == 0) {
-					System.out.println("size is 0");
-					break;
-				}
 				for (int clusterId : oneOldClusterStat.keySet()) {
 					if (oneOldClusterStat.get(clusterId) > maxValue) {
 						maxCid = clusterId;
@@ -1184,12 +1182,14 @@ private static void generateStructures2(int round) {
 					else
 						idCidPair = id + " " + i + "\n";
 					bw.write(idCidPair);
-				}
-				for (int addrId : clusters.keySet()) {
-					String idCidPair = addrId + " " + clusters.get(addrId) + "\n";
-					bw.write(idCidPair);
-				}
+				}				
 			}
+			for (int addrId : clusters.keySet()) {
+				String idCidPair = addrId + " " + clusters.get(addrId) + "\n";
+				bw.write(idCidPair);
+			}
+			long end1 = System.currentTimeMillis();
+			System.out.println("freshClusters read costs:" + (end1 - start1));
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
