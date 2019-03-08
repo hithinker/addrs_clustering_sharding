@@ -17,6 +17,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.lang.Math;
 import java.util.PriorityQueue;
+import java.util.*;
 
 class NodeDegree implements Comparable<NodeDegree> {
 	int id;
@@ -955,6 +956,7 @@ public static HashMap<Integer, Integer> Partition7(int clusterNum,int round) {
 		long cEnd = System.currentTimeMillis();
 		System.out.println(i + "th partition costs:" + (cEnd - cStart) + "ms.");
 		System.out.println("cluster " + i + " with " + cluster.size() + " nodes, partitionW:" + partitionWeight + ", innerW:" + innerWeight);
+		cluster.clear();
 	}
 	
 	// the remaining nodes is allocated to a cluster with biggest weight
@@ -973,7 +975,7 @@ public static HashMap<Integer, Integer> Partition7(int clusterNum,int round) {
 	nodes.clear();
 	nodeWeightSum.clear();
 	degreeQueue.clear();
-	
+	System.gc();
 	
 	return output;
 }
@@ -1022,7 +1024,8 @@ private static void generateStructures2(int round) {
 	nodes = new HashSet<Integer>();
 	nodeWeightSum = new HashMap<Integer, Float>();
 	weightSum = 0;
-	for (Map.Entry<Integer, ArrayList<Float>> entry : pair_table.entrySet()) {
+	for (Iterator<Map.Entry<Integer, ArrayList<Float>>> it = pair_table.entrySet().iterator(); it.hasNext();) {
+		Map.Entry<Integer, ArrayList<Float>> entry = it.next();
 		int thisEnd = entry.getKey();
 		float thisWeightSum = 0;
 		ArrayList<Float> pairs = entry.getValue();
@@ -1040,10 +1043,12 @@ private static void generateStructures2(int round) {
 		nodeWeightSum.put(thisEnd, thisWeightSum);
 		connect_table.put(thisEnd, connections);
 		weight_table.put(thisEnd, weights);
+		it.remove();
 		//System.out.println("node " + thisEnd + " has degree " + thisWeightSum);
 	}
 	long t4 = System.currentTimeMillis();
 	System.out.println("generate structures cost " + (t4 - t3) + "ms");
+	System.gc();
 }
 	
 	// generate edges, nodes and compute the weight sum of all edges in the same time
